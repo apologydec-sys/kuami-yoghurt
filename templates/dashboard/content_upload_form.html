@@ -1,0 +1,94 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} — Super Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.upload-form__header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.upload-form__card { max-width: 760px; }
+.upload-form__notice { margin-bottom: 1.25rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-muted); }
+.upload-form__notice--warning { border-color: rgba(201,168,76,.5); color: var(--accent); }
+.upload-form__errors { margin-bottom: 1rem; color: #fca5a5; }
+.upload-form__advanced { margin: 1.25rem 0; border-top: 1px solid var(--border); padding-top: 1rem; }
+.upload-form__advanced summary { cursor: pointer; color: var(--text-muted); font-weight: 600; }
+.upload-form__advanced-fields { display: grid; gap: 1rem; margin-top: 1rem; }
+.upload-dropzone { display: grid; gap: .6rem; padding: 1rem; border: 1px dashed var(--border); border-radius: var(--radius); }
+.upload-dropzone:focus-within, .upload-dropzone.is-dragging { border-color: var(--accent); background: rgba(201,168,76,.06); }
+.upload-dropzone input[type="file"] { width: 100%; max-width: 100%; }
+.upload-dropzone__filename { color: var(--text-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.upload-preview { max-width: min(100%, 320px); max-height: 240px; border-radius: var(--radius); object-fit: contain; object-position: left; }
+.upload-form__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
+.upload-form__actions .btn { margin: 0 !important; }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="upload-form__header">
+  <a href="{% url back_url %}" class="btn btn-outline btn-sm">← Back</a>
+  <h1 class="dashboard-page-title" style="margin:0">{{ page_title }}</h1>
+</div>
+
+<div class="form-card upload-form__card">
+  {% if not cloudinary_configured %}
+  <div class="upload-form__notice upload-form__notice--warning" role="status">
+    Cloudinary is not configured, so uploads are temporarily unavailable. Add
+    <code>CLOUDINARY_URL</code> or all three of <code>CLOUDINARY_CLOUD_NAME</code>,
+    <code>CLOUDINARY_API_KEY</code>, and <code>CLOUDINARY_API_SECRET</code> to your
+    local <code>.env</code> file or hosting environment, then restart the app.
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="form">
+    {% csrf_token %}
+    <input type="hidden" name="_portal_upload_form" value="1" />
+    {% if form.non_field_errors %}
+    <div class="upload-form__errors" role="alert">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    {% for field in form.basic_fields %}
+    <div class="form__group {% if field.errors %}form__group--error{% endif %}">
+      <label class="form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% if field.field.widget.input_type == "file" %}
+      <div class="upload-dropzone" data-upload-dropzone>
+        {{ field }}
+        <span class="upload-dropzone__filename" data-upload-filename>Choose a file or drag it here</span>
+        {% if field.name == "image" or field.name == "cover_image" or field.name == "thumbnail" %}
+        <img class="upload-preview" data-upload-preview alt="Selected image preview" hidden />
+        {% endif %}
+      </div>
+      {% else %}
+      {{ field }}
+      {% endif %}
+      {% if field.help_text %}<p class="form__help">{{ field.help_text }}</p>{% endif %}
+      {% for error in field.errors %}<p class="form__help form__help--error">{{ error }}</p>{% endfor %}
+    </div>
+    {% endfor %}
+
+    <details class="upload-form__advanced">
+      <summary>Advanced settings (optional)</summary>
+      <div class="upload-form__advanced-fields">
+        {% for field in form.advanced_fields %}
+        <div class="form__group {% if field.errors %}form__group--error{% endif %}">
+          <label class="form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="form__help">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="form__help form__help--error">{{ error }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+
+    <div class="upload-form__actions">
+      <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+      <a href="{% url back_url %}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard_uploads.js' %}" defer></script>
+{% endblock %}

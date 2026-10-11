@@ -1,0 +1,7 @@
+{
+  "task_id": "task-dj-kuami-yoghurt",
+  "task_description": "Build a complete DJ Kuami Yoghurt platform: 7 Django apps (core, music, videos, gallery, bookings, chat, dashboard) with models, views, forms, templates, static assets, booking workflow, chat, admin dashboard, and tests.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004"],
+  "blocked_reason": null
+}

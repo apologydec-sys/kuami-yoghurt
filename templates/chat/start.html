@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Start a Chat — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+
+    <div class="page-hero__title-wrap">
+      <h1 class="page-hero__title">Chat with DJ Kuami Yoghurt</h1>
+      <p class="page-hero__sub">Ask a question, discuss an event, or just say hello.</p>
+    </div>
+
+    <div class="chat-start-card">
+      <form method="post" action="{% url 'chat:start' %}" class="form" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="form__errors" role="alert">
+          {% for error in form.non_field_errors %}<p class="form__error-msg">{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="form__row form__row--2col">
+          <div class="form__group {% if form.customer_name.errors %}form__group--error{% endif %}">
+            <label class="form__label" for="{{ form.customer_name.id_for_label }}">{{ form.customer_name.label }} <span aria-hidden="true">*</span></label>
+            {{ form.customer_name }}
+            {% if form.customer_name.errors %}<p class="form__help form__help--error" role="alert">{{ form.customer_name.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="form__group {% if form.customer_email.errors %}form__group--error{% endif %}">
+            <label class="form__label" for="{{ form.customer_email.id_for_label }}">{{ form.customer_email.label }} <span aria-hidden="true">*</span></label>
+            {{ form.customer_email }}
+            {% if form.customer_email.errors %}<p class="form__help form__help--error" role="alert">{{ form.customer_email.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+
+        <div class="form__group {% if form.customer_phone.errors %}form__group--error{% endif %}">
+          <label class="form__label" for="{{ form.customer_phone.id_for_label }}">{{ form.customer_phone.label }}</label>
+          {{ form.customer_phone }}
+          {% if form.customer_phone.errors %}<p class="form__help form__help--error" role="alert">{{ form.customer_phone.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="form__group {% if form.initial_message.errors %}form__group--error{% endif %}">
+          <label class="form__label" for="{{ form.initial_message.id_for_label }}">{{ form.initial_message.label }} <span aria-hidden="true">*</span></label>
+          {{ form.initial_message }}
+          {% if form.initial_message.errors %}<p class="form__help form__help--error" role="alert">{{ form.initial_message.errors.0 }}</p>{% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Start Conversation</button>
+      </form>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

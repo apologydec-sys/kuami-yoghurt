@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Contact — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">Get in Touch</h1>
+    <p class="page-hero__sub">Send a message or reach out via WhatsApp</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container container--narrow">
+
+    <div class="contact-layout">
+      <div class="contact-layout__form">
+        <h2 class="form-section-title">Send a Message</h2>
+
+        <form method="post" action="{% url 'core:contact' %}" class="form" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="form__errors" role="alert">
+            {% for error in form.non_field_errors %}
+            <p class="form__error-msg">{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="form__row form__row--2col">
+            <div class="form__group {% if form.name.errors %}form__group--error{% endif %}">
+              <label class="form__label" for="{{ form.name.id_for_label }}">{{ form.name.label }} <span aria-hidden="true">*</span></label>
+              {{ form.name }}
+              {% if form.name.errors %}<p class="form__help form__help--error" role="alert">{{ form.name.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form__group {% if form.email.errors %}form__group--error{% endif %}">
+              <label class="form__label" for="{{ form.email.id_for_label }}">{{ form.email.label }} <span aria-hidden="true">*</span></label>
+              {{ form.email }}
+              {% if form.email.errors %}<p class="form__help form__help--error" role="alert">{{ form.email.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <div class="form__row form__row--2col">
+            <div class="form__group {% if form.phone.errors %}form__group--error{% endif %}">
+              <label class="form__label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}<p class="form__help form__help--error" role="alert">{{ form.phone.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="form__group {% if form.subject.errors %}form__group--error{% endif %}">
+              <label class="form__label" for="{{ form.subject.id_for_label }}">{{ form.subject.label }} <span aria-hidden="true">*</span></label>
+              {{ form.subject }}
+              {% if form.subject.errors %}<p class="form__help form__help--error" role="alert">{{ form.subject.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <div class="form__group {% if form.message.errors %}form__group--error{% endif %}">
+            <label class="form__label" for="{{ form.message.id_for_label }}">{{ form.message.label }} <span aria-hidden="true">*</span></label>
+            {{ form.message }}
+            {% if form.message.errors %}<p class="form__help form__help--error" role="alert">{{ form.message.errors.0 }}</p>{% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Send Message</button>
+        </form>
+      </div>
+
+      <aside class="contact-layout__info">
+        <h2 class="form-section-title">Other Ways to Reach Us</h2>
+
+        {% if site_settings and site_settings.whatsapp_number %}
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">💬</div>
+          <div>
+            <h3 class="contact-card__title">WhatsApp</h3>
+            <p class="contact-card__text">Prefer chatting? Reach out directly on WhatsApp.</p>
+            <a href="https://wa.me/{{ site_settings.whatsapp_number }}" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Open WhatsApp</a>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if site_settings and site_settings.email %}
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">✉️</div>
+          <div>
+            <h3 class="contact-card__title">Email</h3>
+            <a href="mailto:{{ site_settings.email }}" class="contact-card__link">{{ site_settings.email }}</a>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">📅</div>
+          <div>
+            <h3 class="contact-card__title">Book an Event</h3>
+            <p class="contact-card__text">Ready to make an official booking request?</p>
+            <a href="{% url 'bookings:create' %}" class="btn btn-outline">Book Now</a>
+          </div>
+        </div>
+
+        <div class="contact-card">
+          <div class="contact-card__icon" aria-hidden="true">💬</div>
+          <div>
+            <h3 class="contact-card__title">Live Chat</h3>
+            <p class="contact-card__text">Start a chat conversation directly.</p>
+            <a href="{% url 'chat:start' %}" class="btn btn-outline">Start Chat</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}

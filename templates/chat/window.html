@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chat — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+
+    <div class="chat-window" aria-label="Chat conversation">
+      <div class="chat-window__header">
+        <div class="chat-window__header-info">
+          <strong>DJ Kuami Yoghurt</strong>
+          <span class="chat-window__status" id="chatStatus">Online</span>
+        </div>
+      </div>
+
+      <!-- Message thread -->
+      <div class="chat-window__messages" id="chatMessages" role="log" aria-live="polite" aria-label="Messages">
+        {% for message in messages %}
+        <div class="chat-message {% if message.is_from_dj %}chat-message--dj{% else %}chat-message--customer{% endif %}" id="msg-{{ message.pk }}">
+          <div class="chat-message__bubble">
+            <p class="chat-message__text">{{ message.content }}</p>
+            <time class="chat-message__time" datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"g:i A" }}</time>
+          </div>
+        </div>
+        {% endfor %}
+        {% if not messages %}
+        <p class="chat-window__empty">No messages yet. Start the conversation above.</p>
+        {% endif %}
+      </div>
+
+      <!-- Send form -->
+      <div class="chat-window__composer">
+        <form id="chatSendForm" class="chat-composer" aria-label="Send message">
+          {% csrf_token %}
+          <div class="chat-composer__input-wrap">
+            <label for="chatInput" class="sr-only">Message</label>
+            <textarea
+              id="chatInput"
+              name="content"
+              rows="2"
+              maxlength="2000"
+              placeholder="Type a message…"
+              class="chat-composer__input"
+              aria-required="true"
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary chat-composer__send" aria-label="Send message">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </form>
+        <p class="chat-composer__hint" id="sendError" role="alert" aria-live="assertive" hidden></p>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var sendUrl = "{% url 'chat:send' pk=conversation.pk %}";
+    var pollUrl = "{% url 'chat:poll' pk=conversation.pk %}";
+    var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    if (window.startChatPolling) {
+      window.startChatPolling(sendUrl, pollUrl, csrfToken);
+    }
+  });
+</script>
+{% endblock %}

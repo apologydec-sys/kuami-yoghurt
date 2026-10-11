@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Booking Submitted — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <div class="success-card">
+      <div class="success-card__icon" aria-hidden="true">✓</div>
+      <h1 class="success-card__title">Booking Request Received!</h1>
+
+      {% if booking %}
+      <p class="success-card__text">
+        Thank you, <strong>{{ booking.customer_name }}</strong>. Your booking request for a
+        <strong>{{ booking.get_event_type_display }}</strong> on
+        <strong>{{ booking.event_date|date:"F j, Y" }}</strong> has been received.
+      </p>
+      <p class="success-card__ref">Reference: <strong>{{ booking.reference }}</strong></p>
+      {% else %}
+      <p class="success-card__text">Your booking request has been received successfully.</p>
+      {% endif %}
+
+      <div class="tracking-link-box">
+        <p class="tracking-link-box__label">Your private tracking link:</p>
+        <div class="tracking-link-box__url-row">
+          <input
+            type="text"
+            id="trackingLink"
+            class="tracking-link-box__input"
+            value="{{ request.scheme }}://{{ request.get_host }}{% url 'bookings:track' token=token %}"
+            readonly
+            aria-label="Tracking link"
+          />
+          <button class="btn btn-outline tracking-link-box__copy" onclick="copyTrackingLink()" type="button" aria-label="Copy tracking link">Copy</button>
+        </div>
+        <p class="tracking-link-box__hint">
+          Save this link — it's the only way to check your booking status. It is private and secure.
+        </p>
+      </div>
+
+      <div class="success-card__actions">
+        <a href="{% url 'bookings:track' token=token %}" class="btn btn-primary">Check Booking Status</a>
+        <a href="{% url 'core:home' %}" class="btn btn-outline">Back to Home</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyTrackingLink() {
+  var input = document.getElementById('trackingLink');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(input.value).then(function() {
+      var btn = document.querySelector('.tracking-link-box__copy');
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+    });
+  } else {
+    input.select();
+    document.execCommand('copy');
+  }
+}
+</script>
+{% endblock %}

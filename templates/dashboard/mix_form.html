@@ -1,0 +1,26 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}{{ action }} Mix — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+  <a href="{% url 'dashboard:music' %}" class="btn btn-outline btn-sm">← Music</a>
+  <h1 class="dashboard-page-title" style="margin:0">{{ action }} Mix</h1>
+</div>
+
+<div class="form-card">
+  <form method="post" enctype="multipart/form-data" class="form">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form__group {% if field.errors %}form__group--error{% endif %}">
+      <label class="form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}<p class="form__help">{{ field.help_text }}</p>{% endif %}
+      {% if field.errors %}<p class="form__help form__help--error">{{ field.errors.0 }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Save Mix</button>
+    <a href="{% url 'dashboard:music' %}" class="btn btn-outline" style="margin-left:0.5rem">Cancel</a>
+  </form>
+</div>
+{% endblock %}

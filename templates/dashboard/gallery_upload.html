@@ -1,0 +1,25 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Upload Image — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+  <a href="{% url 'dashboard:gallery' %}" class="btn btn-outline btn-sm">← Gallery</a>
+  <h1 class="dashboard-page-title" style="margin:0">Upload Image</h1>
+</div>
+
+<div class="form-card">
+  <form method="post" enctype="multipart/form-data" class="form">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="form__group {% if field.errors %}form__group--error{% endif %}">
+      <label class="form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<p class="form__help form__help--error">{{ field.errors.0 }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">Upload</button>
+    <a href="{% url 'dashboard:gallery' %}" class="btn btn-outline" style="margin-left:0.5rem">Cancel</a>
+  </form>
+</div>
+{% endblock %}

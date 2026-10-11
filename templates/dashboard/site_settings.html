@@ -1,0 +1,79 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Site Settings — Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.settings-form { max-width: 900px; }
+.settings-form__section { margin: 1.75rem 0 1rem; }
+.settings-form__section:first-of-type { margin-top: 0; }
+.settings-form__notice { margin-bottom: 1.25rem; padding: 1rem; border: 1px solid rgba(201,168,76,.5); border-radius: var(--radius); color: var(--accent); }
+.settings-form__errors { margin-bottom: 1rem; color: #fca5a5; }
+.settings-form__dropzone { display: grid; gap: .6rem; padding: 1rem; border: 1px dashed var(--border); border-radius: var(--radius); }
+.settings-form__dropzone:focus-within, .settings-form__dropzone.is-dragging { border-color: var(--accent); background: rgba(201,168,76,.06); }
+.settings-form__dropzone input[type="file"] { width: 100%; max-width: 100%; }
+.settings-form__filename { color: var(--text-muted); font-size: .875rem; overflow-wrap: anywhere; }
+.settings-form__preview { max-width: min(100%, 320px); max-height: 240px; border-radius: var(--radius); object-fit: contain; object-position: left; }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Site Settings</h1>
+
+<div class="form-card settings-form">
+  {% if not cloudinary_configured %}
+  <div class="settings-form__notice" role="status">
+    Profile image uploads are unavailable until Cloudinary is configured. Add
+    <code>CLOUDINARY_URL</code> or all three Cloudinary variables to your local
+    <code>.env</code> file or hosting environment.
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="settings-form__errors" role="alert">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <h2 class="form-section-title settings-form__section">General</h2>
+    {% for field in form %}
+    {% if field.name == "whatsapp_number" %}
+    <h2 class="form-section-title settings-form__section">Contact</h2>
+    {% endif %}
+    {% if field.name == "facebook_url" %}
+    <h2 class="form-section-title settings-form__section">Social Links</h2>
+    {% endif %}
+    <div class="form__group {% if field.errors %}form__group--error{% endif %}">
+      <label class="form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% if field.name == "profile_image" and current_profile_image and cloudinary_configured %}
+      <div style="margin-bottom:.5rem">
+        <img src="{{ current_profile_image.url }}" alt="Current profile image" style="width:100px;height:100px;object-fit:cover;border-radius:50%" />
+      </div>
+      {% endif %}
+      {% if field.field.widget.input_type == "file" %}
+      <div class="settings-form__dropzone" data-upload-dropzone>
+        {{ field }}
+        <span class="settings-form__filename" data-upload-filename>Choose a file or drag it here</span>
+        <img class="settings-form__preview" data-upload-preview alt="Selected profile image preview" hidden />
+      </div>
+      {% else %}
+      {{ field }}
+      {% endif %}
+      {% if field.help_text %}<p class="form__help">{{ field.help_text }}</p>{% endif %}
+      {% if field.errors %}
+        {% for error in field.errors %}<p class="form__help form__help--error">{{ error }}</p>{% endfor %}
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard_uploads.js' %}" defer></script>
+{% endblock %}

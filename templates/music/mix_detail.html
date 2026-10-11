@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ mix.title }} — DJ Kuami Yoghurt{% endblock %}
+{% block meta_description %}{{ mix.description|truncatechars:160 }}{% endblock %}
+
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}">Home</a>
+      <span aria-hidden="true"> / </span>
+      <a href="{% url 'music:mix_list' %}">Mixes</a>
+      <span aria-hidden="true"> / </span>
+      <span aria-current="page">{{ mix.title }}</span>
+    </nav>
+
+    <div class="detail-layout">
+      <div class="detail-layout__cover">
+        {% if mix.cover_image %}
+        <img src="{{ mix.cover_image.url }}" alt="{{ mix.title }} cover art" class="detail-cover" />
+        {% else %}
+        <div class="detail-cover detail-cover--placeholder" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="80" height="80" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="detail-layout__info">
+        {% if mix.category %}<span class="card__badge">{{ mix.category.name }}</span>{% endif %}
+        <h1 class="detail-title">{{ mix.title }}</h1>
+        {% if mix.published_at %}
+        <time class="detail-meta" datetime="{{ mix.published_at|date:'c' }}">{{ mix.published_at|date:"F j, Y" }}</time>
+        {% endif %}
+        {% if mix.description %}
+        <div class="prose detail-description">{{ mix.description|linebreaks }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Audio Player -->
+    {% if mix.audio_file %}
+    <div class="audio-player-wrapper" data-mix-slug="{{ mix.slug }}">
+      <div class="audio-player" role="region" aria-label="Audio player for {{ mix.title }}">
+        <audio id="audioPlayer" src="{{ mix.audio_file.url }}" preload="metadata" aria-label="{{ mix.title }}"></audio>
+
+        <div class="audio-player__controls">
+          <button class="audio-player__play-btn" id="playPauseBtn" aria-label="Play">
+            <svg class="icon-play" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <div class="audio-player__visualizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+
+          <div class="audio-player__progress-area">
+            <span class="audio-player__time" id="currentTime" aria-live="off">0:00</span>
+            <input type="range" class="audio-player__progress" id="progressBar" value="0" min="0" max="100" step="0.1" aria-label="Seek" />
+            <span class="audio-player__time" id="totalTime">--:--</span>
+          </div>
+
+          <div class="audio-player__volume-area">
+            <label for="volumeSlider" class="sr-only">Volume</label>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            <input type="range" id="volumeSlider" class="audio-player__volume" value="100" min="0" max="100" aria-label="Volume" />
+          </div>
+        </div>
+        <p class="audio-player__state" id="playerStatus" role="status" aria-live="polite">Ready to play</p>
+      </div>
+    </div>
+    <p class="audio-player__hint">Keyboard: Space to play/pause</p>
+    {% else %}
+    <div class="unavailable-notice" role="status">
+      <p>Audio is not available for this mix yet.</p>
+    </div>
+    {% endif %}
+
+    <!-- Tracklist -->
+    {% if mix.tracklist %}
+    <section class="tracklist" aria-labelledby="tracklist-heading">
+      <h2 class="tracklist__title" id="tracklist-heading">Tracklist</h2>
+      <ol class="tracklist__list">
+        {% for line in mix.tracklist.splitlines %}
+        {% if line.strip %}
+        <li class="tracklist__item">{{ line }}</li>
+        {% endif %}
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+
+    <!-- Related Tracks -->
+    {% if mix.tracks.all %}
+    <section class="related-tracks" aria-labelledby="tracks-heading">
+      <h2 class="tracklist__title" id="tracks-heading">Tracks in This Mix</h2>
+      <div class="track-list">
+        {% for track in mix.tracks.all|slice:":10" %}
+        <div class="track-row">
+          <div class="track-row__info">
+            <a href="{% url 'music:track_detail' track.slug %}" class="track-row__title">{{ track.title }}</a>
+          </div>
+          <a href="{% url 'music:track_detail' track.slug %}" class="track-row__play" aria-label="Play {{ track.title }}">▶</a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <p><a href="{% url 'music:mix_list' %}" class="btn btn-outline" style="margin-top:2rem">← Back to Mixes</a></p>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.initAudioPlayer) window.initAudioPlayer();
+  });
+</script>
+{% endblock %}

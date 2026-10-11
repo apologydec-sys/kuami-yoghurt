@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}About — DJ Kuami Yoghurt{% endblock %}
+{% block meta_description %}Learn about Issac Botchew, the professional DJ behind DJ Kuami Yoghurt.{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">About DJ Kuami Yoghurt</h1>
+    <p class="page-hero__sub">The story of Issac Botchew</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    {% if biography %}
+    <div class="about-layout">
+      <div class="about-layout__image">
+        {% if biography.profile_image %}
+        <img src="{{ biography.profile_image.url }}" alt="DJ Kuami Yoghurt — Issac Botchew" class="about-portrait" />
+        {% elif site_settings and site_settings.profile_image %}
+        <img src="{{ site_settings.profile_image.url }}" alt="DJ Kuami Yoghurt" class="about-portrait" />
+        {% else %}
+        <div class="about-portrait about-portrait--placeholder" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="80" height="80" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v2h20v-2c0-3.3-6.7-5-10-5z"/></svg>
+        </div>
+        {% endif %}
+      </div>
+      <div class="about-layout__body">
+        <h2 class="about-layout__title">{{ biography.title }}</h2>
+        <div class="prose">{{ biography.body|linebreaks }}</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="about-layout">
+      <div class="about-layout__body">
+        <h2 class="about-layout__title">DJ Kuami Yoghurt</h2>
+        <div class="prose">
+          <p>DJ Kuami Yoghurt, born Issac Botchew, is a professional DJ and music artist dedicated to delivering exceptional sound experiences for every occasion.</p>
+          <p>Whether it's a high-energy wedding reception, an intimate birthday party, or a major festival, DJ Kuami Yoghurt brings the perfect blend of music, energy, and professionalism.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Contact CTA -->
+<section class="booking-cta">
+  <div class="container booking-cta__inner">
+    <div class="booking-cta__text">
+      <h2 class="booking-cta__title">Want DJ Kuami Yoghurt at Your Event?</h2>
+    </div>
+    <div class="booking-cta__actions">
+      <a href="{% url 'bookings:create' %}" class="btn btn-primary">Book Now</a>
+      <a href="{% url 'core:contact' %}" class="btn btn-outline">Get in Touch</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

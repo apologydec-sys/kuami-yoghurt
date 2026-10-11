@@ -1,0 +1,69 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Music — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Music</h1>
+
+<div class="dashboard-row">
+  <!-- Mixes -->
+  <section class="dashboard-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 class="dashboard-section__title" style="margin:0">Mixes ({{ mixes.count }})</h2>
+      <a href="{% url 'dashboard:mix_add' %}" class="btn btn-primary btn-sm">Add Mix</a>
+    </div>
+    {% if mixes %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Category</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for mix in mixes %}
+          <tr>
+            <td>{{ mix.title }}</td>
+            <td>{{ mix.category.name|default:"—" }}</td>
+            <td>
+              {% if mix.is_published %}<span class="badge badge--success">Published</span>
+              {% else %}<span class="badge badge--muted">Draft</span>{% endif %}
+              {% if mix.is_featured %}<span class="badge badge--accent">Featured</span>{% endif %}
+            </td>
+            <td><a href="{% url 'dashboard:mix_edit' slug=mix.slug %}" class="btn btn-outline btn-sm">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No mixes yet.</p>
+    {% endif %}
+  </section>
+
+  <!-- Tracks -->
+  <section class="dashboard-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 class="dashboard-section__title" style="margin:0">Tracks ({{ tracks.count }})</h2>
+      <a href="{% url 'dashboard:track_add' %}" class="btn btn-primary btn-sm">Add Track</a>
+    </div>
+    {% if tracks %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for track in tracks %}
+          <tr>
+            <td>{{ track.title }}</td>
+            <td>{{ track.category.name|default:"—" }}</td>
+            <td>
+              {% if track.is_published %}<span class="badge badge--success">Published</span>
+              {% else %}<span class="badge badge--muted">Draft</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No tracks yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

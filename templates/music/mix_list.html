@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mixes — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">Mixes</h1>
+    <p class="page-hero__sub">Full DJ sets and curated mixes</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    <!-- Filters -->
+    <form method="get" class="filter-bar" role="search" aria-label="Filter mixes">
+      <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search mixes…" class="filter-bar__input" aria-label="Search" />
+      <select name="category" class="filter-bar__select" aria-label="Filter by category">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">Filter</button>
+      {% if request.GET.q or request.GET.category %}
+      <a href="{% url 'music:mix_list' %}" class="btn btn-outline">Clear</a>
+      {% endif %}
+    </form>
+
+    {% if mixes %}
+    <div class="card-grid card-grid--4">
+      {% for mix in mixes %}
+      <article class="card card--media">
+        <a href="{% url 'music:mix_detail' mix.slug %}" class="card__image-link" aria-label="{{ mix.title }}">
+          {% if mix.cover_image %}
+          <img src="{{ mix.cover_image.url }}" alt="{{ mix.title }} cover art" class="card__image" loading="lazy" />
+          {% else %}
+          <div class="card__image card__image--placeholder" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          {% endif %}
+          <div class="card__play-overlay" aria-hidden="true">▶</div>
+        </a>
+        <div class="card__body">
+          <h2 class="card__title"><a href="{% url 'music:mix_detail' mix.slug %}">{{ mix.title }}</a></h2>
+          {% if mix.category %}<span class="card__badge">{{ mix.category.name }}</span>{% endif %}
+          {% if mix.description %}<p class="card__text">{{ mix.description|truncatechars:100 }}</p>{% endif %}
+          {% if mix.published_at %}<time class="card__meta" datetime="{{ mix.published_at|date:'c' }}">{{ mix.published_at|date:"M j, Y" }}</time>{% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav class="pagination" aria-label="Page navigation">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="pagination__link" aria-label="Previous page">← Previous</a>
+      {% endif %}
+      <span class="pagination__info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}" class="pagination__link" aria-label="Next page">Next →</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">🎧</div>
+      <h2 class="empty-state__title">No mixes yet</h2>
+      <p class="empty-state__text">Mixes will appear here once they are published.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Videos — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">Videos</h1>
+    <p class="page-hero__sub">DJ performances, sets, and clips</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    <!-- Category tabs -->
+    {% if categories %}
+    <nav class="filter-tabs" aria-label="Video categories">
+      <a href="{% url 'videos:list' %}" class="filter-tabs__tab {% if not request.GET.category %}filter-tabs__tab--active{% endif %}">All</a>
+      {% for cat in categories %}
+      <a href="?category={{ cat.slug }}" class="filter-tabs__tab {% if request.GET.category == cat.slug %}filter-tabs__tab--active{% endif %}">{{ cat.name }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    {% if videos %}
+    <div class="card-grid card-grid--3">
+      {% for video in videos %}
+      <article class="card card--media">
+        <a href="{% url 'videos:detail' video.slug %}" class="card__image-link" aria-label="{{ video.title }}">
+          {% if video.thumbnail %}
+          <img src="{{ video.thumbnail.url }}" alt="{{ video.title }} thumbnail" class="card__image" loading="lazy" />
+          {% else %}
+          <div class="card__image card__image--placeholder" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 10.5v-5l4.5 2.5-4.5 2.5z"/></svg>
+          </div>
+          {% endif %}
+          <div class="card__play-overlay card__play-overlay--video" aria-hidden="true">▶</div>
+        </a>
+        <div class="card__body">
+          <h2 class="card__title"><a href="{% url 'videos:detail' video.slug %}">{{ video.title }}</a></h2>
+          {% if video.category %}<span class="card__badge">{{ video.category.name }}</span>{% endif %}
+          {% if video.description %}<p class="card__text">{{ video.description|truncatechars:100 }}</p>{% endif %}
+          {% if video.published_at %}<time class="card__meta" datetime="{{ video.published_at|date:'c' }}">{{ video.published_at|date:"M j, Y" }}</time>{% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">🎬</div>
+      <h2 class="empty-state__title">No videos yet</h2>
+      <p class="empty-state__text">Videos will appear here once they are published.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}

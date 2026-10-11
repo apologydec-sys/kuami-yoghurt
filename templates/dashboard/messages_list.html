@@ -1,0 +1,52 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Messages — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+  <h1 class="dashboard-page-title" style="margin:0">Contact Messages</h1>
+  <a href="?mark_all_read=1" class="btn btn-outline btn-sm" onclick="return confirm('Mark all messages as read?')">Mark All Read</a>
+</div>
+
+{% if contact_messages %}
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Subject</th>
+        <th>Received</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for msg in contact_messages %}
+      <tr {% if not msg.is_read %}class="row--unread"{% endif %}>
+        <td>{{ msg.name }}</td>
+        <td><a href="mailto:{{ msg.email }}">{{ msg.email }}</a></td>
+        <td>
+          <details>
+            <summary>{{ msg.subject }}</summary>
+            <div style="margin-top:0.5rem;padding:0.5rem;background:var(--bg-primary);border-radius:4px;white-space:pre-wrap">{{ msg.message }}</div>
+          </details>
+        </td>
+        <td>{{ msg.created_at|date:"M j, Y, g:i A" }}</td>
+        <td>
+          {% if msg.is_read %}
+          <span class="badge badge--muted">Read</span>
+          {% else %}
+          <span class="badge badge--accent">Unread</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p class="empty-state__text">No messages yet.</p>
+</div>
+{% endif %}
+{% endblock %}

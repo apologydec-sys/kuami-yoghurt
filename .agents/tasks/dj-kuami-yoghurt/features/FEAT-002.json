@@ -1,0 +1,42 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Implement all views, forms, URL routing, and context processors for apps.core, apps.music, apps.videos, apps.gallery, and apps.bookings. This covers the full public-facing website: home, about, contact, music library, video library, gallery, booking form, booking status portal, and quotation acceptance. Depends on FEAT-001 (models must exist).",
+  "status": "completed",
+  "steps": [
+    "1. Create apps/core/views.py: HomeView (TemplateView, queries Mix.objects.filter(is_published=True, is_featured=True)[:4], Track published featured[:4], Video featured published[:3], GalleryImage featured published[:6], SiteSettings.objects.first()); AboutView; ContactView (FormView with ContactForm, saves ContactMessage, success redirect); handler404 and handler500 functions.",
+    "2. Create apps/core/forms.py: ContactForm(name, email, phone optional, subject, message with max_length=2000 and MinValueValidator on length). Use Django forms.Form not ModelForm to control validation.",
+    "3. Create apps/core/context_processors.py: site_settings(request) — returns {'site_settings': SiteSettings.objects.first()} so every template has access to brand info and social links.",
+    "4. Add the context processor 'apps.core.context_processors.site_settings' to TEMPLATES OPTIONS context_processors in config/settings.py.",
+    "5. Create apps/core/urls.py with namespace='core': path('', HomeView, name='home'), path('about/', AboutView, name='about'), path('contact/', ContactView, name='contact'), path('contact/success/', ContactSuccessView, name='contact_success').",
+    "6. Create apps/music/views.py: MixListView (ListView, filter published, search by q param, filter by category slug), MixDetailView (DetailView, increments play_count, gets related mixes), TrackListView, TrackDetailView (increments play_count), CategoryListView. All views use select_related('category').",
+    "7. Create apps/music/forms.py: MusicSearchForm(q CharField optional, category ModelChoiceField optional).",
+    "8. Create apps/music/urls.py with namespace='music': path('mixes/', ...), path('mixes/<slug:slug>/', ...), path('tracks/', ...), path('tracks/<slug:slug>/', ...), path('categories/', ...). Also add an AJAX endpoint path('mixes/<slug:slug>/play/', IncrementPlayCountView, name='increment_play') that accepts POST and returns JSON.",
+    "9. Create apps/videos/views.py: VideoListView (filter published, filter by category), VideoDetailView (increments play_count). apps/videos/forms.py: VideoSearchForm. apps/videos/urls.py with namespace='videos': path('', VideoListView, name='list'), path('<slug:slug>/', VideoDetailView, name='detail').",
+    "10. Create apps/gallery/views.py: GalleryView (all published images, filter by category), GalleryDetailView. apps/gallery/urls.py with namespace='gallery': path('', GalleryView, name='index'), path('<int:pk>/', GalleryDetailView, name='detail').",
+    "11. Create apps/bookings/forms.py: BookingForm(customer_name, customer_email, customer_phone, event_type Select, event_date DateField with future-date validation, event_time TimeField optional, event_location, guest_count IntegerField optional min=1 max=100000, music_preferences, additional_requirements). Server-side: reject dates in the past, reject obviously invalid emails.",
+    "12. Create apps/bookings/views.py: BookingCreateView (FormView, on valid: generate token=secrets.token_urlsafe(48), create Booking, create BookingStatusHistory entry, redirect to tracking page); BookingSuccessView (show tracking link); BookingTrackingView (get Booking by token from URL kwarg, return 404 if not found — never reveal whether token is wrong vs booking missing); QuotationResponseView (POST-only, validates customer can only accept/decline when status=quotation_sent, prevents replay by checking current status). Rate limit BookingCreateView: store last submission time in session, reject if < 60 seconds since last attempt.",
+    "13. Create apps/bookings/urls.py with namespace='bookings': path('book/', BookingCreateView, name='create'), path('book/success/<str:token>/', BookingSuccessView, name='success'), path('booking/<str:token>/', BookingTrackingView, name='track'), path('booking/<str:token>/respond/', QuotationResponseView, name='respond').",
+    "14. Wire all app URL files into config/urls.py: include('apps.core.urls', namespace='core') at '', include('apps.music.urls', namespace='music') at 'music/', include('apps.videos.urls', namespace='videos') at 'videos/', include('apps.gallery.urls', namespace='gallery') at 'gallery/', include('apps.bookings.urls', namespace='bookings') at 'bookings/'. Also add handler404 and handler500 assignments pointing to apps.core.views.",
+    "15. Create apps/core/tests.py: test home page returns 200, test contact form submission saves ContactMessage, test contact form rejects invalid email. Create apps/bookings/tests.py: test booking form with valid data creates Booking and generates token, test past-date rejected, test tracking view returns 200 with valid token, test tracking view returns 404 with wrong token, test quotation respond view rejects replay."
+  ],
+  "acceptance_criteria": [
+    "python manage.py check reports 0 issues",
+    "GET / returns 200",
+    "GET /about/ returns 200",
+    "GET /contact/ returns 200",
+    "GET /music/mixes/ returns 200",
+    "GET /videos/ returns 200",
+    "GET /gallery/ returns 200",
+    "GET /bookings/book/ returns 200",
+    "POST /bookings/book/ with valid data creates a Booking row and redirects to success page",
+    "GET /bookings/booking/<invalid_token>/ returns 404",
+    "python manage.py test apps.core apps.bookings --verbosity=2 passes"
+  ],
+  "verification": [
+    ".venv\\Scripts\\python.exe manage.py check",
+    ".venv\\Scripts\\python.exe manage.py test apps.core apps.bookings apps.music apps.videos apps.gallery --verbosity=2"
+  ],
+  "blocked_reason": null,
+  "findings": "All 36 tests pass (Ran 36 tests in ~1.9s, OK). manage.py check reports 0 issues. All acceptance criteria verified via test suite: home/about/contact/music/videos/gallery/bookings pages return 200; booking POST creates Booking and redirects; invalid token returns 404; quotation replay blocked with 400. Committed as 'feat: FEAT-002 — views, forms, URL routing' (39 files, 1053 insertions)."
+}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Booking {{ booking.reference }} — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+
+    <h1 class="page-hero__title" style="margin-bottom:0.5rem">Your Booking</h1>
+    <p class="detail-meta">Reference: <strong>{{ booking.reference }}</strong></p>
+
+    <!-- Status Badge -->
+    <div class="status-badge status-badge--{{ booking.status }}" role="status">
+      {{ booking.get_status_display }}
+    </div>
+
+    <!-- Event Details -->
+    <section class="detail-card" aria-labelledby="event-details-heading">
+      <h2 class="detail-card__title" id="event-details-heading">Event Details</h2>
+      <dl class="detail-list">
+        <div class="detail-list__item"><dt>Event Type</dt><dd>{{ booking.get_event_type_display }}</dd></div>
+        <div class="detail-list__item"><dt>Date</dt><dd>{{ booking.event_date|date:"F j, Y" }}{% if booking.event_time %} at {{ booking.event_time|time:"g:i A" }}{% endif %}</dd></div>
+        <div class="detail-list__item"><dt>Location</dt><dd>{{ booking.event_location }}</dd></div>
+        {% if booking.guest_count %}<div class="detail-list__item"><dt>Expected Guests</dt><dd>{{ booking.guest_count }}</dd></div>{% endif %}
+        {% if booking.music_preferences %}<div class="detail-list__item"><dt>Music Preferences</dt><dd>{{ booking.music_preferences }}</dd></div>{% endif %}
+      </dl>
+    </section>
+
+    <!-- Quotation -->
+    {% if booking.quotation %}
+    <section class="detail-card detail-card--accent" aria-labelledby="quotation-heading">
+      <h2 class="detail-card__title" id="quotation-heading">Quotation</h2>
+      <p class="quotation-amount">{{ booking.quotation.currency }} {{ booking.quotation.amount }}</p>
+      {% if booking.quotation.details %}
+      <div class="prose quotation-details">{{ booking.quotation.details|linebreaks }}</div>
+      {% endif %}
+      {% if booking.quotation.terms %}
+      <div class="quotation-terms">
+        <strong>Terms:</strong>
+        <div class="prose">{{ booking.quotation.terms|linebreaks }}</div>
+      </div>
+      {% endif %}
+      {% if booking.quotation.expires_at %}
+      <p class="quotation-expiry">
+        <strong>Expires:</strong>
+        <time datetime="{{ booking.quotation.expires_at|date:'c' }}">{{ booking.quotation.expires_at|date:"F j, Y, g:i A" }}</time>
+      </p>
+      {% endif %}
+
+      {% if booking.status == 'quotation_sent' %}
+      <div class="quotation-actions">
+        <p>Do you accept this quotation?</p>
+        <form method="post" action="{% url 'bookings:respond' token=booking.token %}" style="display:inline">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="accept" />
+          <button type="submit" class="btn btn-primary">Accept</button>
+        </form>
+        <form method="post" action="{% url 'bookings:respond' token=booking.token %}" style="display:inline;margin-left:0.75rem">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="decline" />
+          <button type="submit" class="btn btn-outline btn-danger">Decline</button>
+        </form>
+      </div>
+      {% elif booking.status == 'confirmed' %}
+      <p class="status-note status-note--success">✓ You accepted this quotation.</p>
+      {% elif booking.status == 'declined' %}
+      <p class="status-note status-note--declined">You declined this quotation.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Status Timeline -->
+    {% if history %}
+    <section class="detail-card" aria-labelledby="history-heading">
+      <h2 class="detail-card__title" id="history-heading">Status History</h2>
+      <ol class="status-timeline" reversed>
+        {% for entry in history %}
+        <li class="status-timeline__item">
+          <span class="status-timeline__dot" aria-hidden="true"></span>
+          <div class="status-timeline__content">
+            <strong>{{ entry.get_status_display }}</strong>
+            <time class="status-timeline__time" datetime="{{ entry.changed_at|date:'c' }}">{{ entry.changed_at|date:"M j, Y, g:i A" }}</time>
+            {% if entry.note %}<p class="status-timeline__note">{{ entry.note }}</p>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endif %}
+
+    <!-- Chat CTA -->
+    <div class="detail-card" style="text-align:center">
+      <p>Have questions about your booking?</p>
+      <a href="{% url 'chat:start' %}" class="btn btn-outline">Start a Chat</a>
+      {% if site_settings and site_settings.whatsapp_number %}
+      <a href="https://wa.me/{{ site_settings.whatsapp_number }}" class="btn btn-primary" target="_blank" rel="noopener noreferrer" style="margin-left:0.75rem">WhatsApp</a>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

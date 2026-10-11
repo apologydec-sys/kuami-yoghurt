@@ -1,0 +1,43 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Videos — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+  <h1 class="dashboard-page-title" style="margin:0">Videos</h1>
+  <a href="{% url 'dashboard:video_add' %}" class="btn btn-primary">Add Video</a>
+</div>
+
+{% if videos %}
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for video in videos %}
+      <tr>
+        <td>{{ video.title }}</td>
+        <td>{{ video.category.name|default:"—" }}</td>
+        <td>
+          {% if video.is_published %}<span class="badge badge--success">Published</span>
+          {% else %}<span class="badge badge--muted">Draft</span>{% endif %}
+          {% if video.is_featured %}<span class="badge badge--accent">Featured</span>{% endif %}
+        </td>
+        <td>{{ video.published_at|date:"M j, Y"|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p class="empty-state__text">No videos yet. <a href="{% url 'dashboard:video_add' %}">Add one</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

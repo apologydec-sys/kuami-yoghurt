@@ -1,0 +1,82 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Dashboard — DJ Kuami Yoghurt{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Dashboard</h1>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-card__value">{{ bookings_today }}</div>
+    <div class="stat-card__label">Bookings Today</div>
+  </div>
+  <div class="stat-card stat-card--accent">
+    <div class="stat-card__value">{{ pending_bookings }}</div>
+    <div class="stat-card__label">Pending Bookings</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ unread_messages }}</div>
+    <div class="stat-card__label">Unread Messages</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ unread_chats }}</div>
+    <div class="stat-card__label">Unread Chat Messages</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ total_mix_plays }}</div>
+    <div class="stat-card__label">Total Mix Plays</div>
+  </div>
+</div>
+
+<div class="dashboard-row">
+  <section class="dashboard-section">
+    <h2 class="dashboard-section__title">Recent Bookings</h2>
+    {% if recent_bookings %}
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Event Type</th>
+            <th>Event Date</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in recent_bookings %}
+          <tr>
+            <td>{{ booking.customer_name }}</td>
+            <td>{{ booking.get_event_type_display }}</td>
+            <td>{{ booking.event_date|date:"M j, Y" }}</td>
+            <td><span class="status-pill status-pill--{{ booking.status }}">{{ booking.get_status_display }}</span></td>
+            <td><a href="{% url 'dashboard:booking_detail' reference=booking.reference %}" class="btn btn-outline btn-sm">View</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{% url 'dashboard:bookings' %}" class="btn btn-outline" style="margin-top:1rem">View All Bookings</a>
+    {% else %}
+    <p class="text-muted">No bookings yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="dashboard-section">
+    <h2 class="dashboard-section__title">Unread Messages</h2>
+    {% if recent_messages %}
+    <ul class="message-preview-list">
+      {% for msg in recent_messages %}
+      <li class="message-preview">
+        <strong>{{ msg.name }}</strong> — {{ msg.subject|truncatechars:50 }}
+        <time class="message-preview__time">{{ msg.created_at|date:"M j" }}</time>
+      </li>
+      {% endfor %}
+    </ul>
+    <a href="{% url 'dashboard:messages' %}" class="btn btn-outline" style="margin-top:1rem">View All Messages</a>
+    {% else %}
+    <p class="text-muted">No unread messages.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

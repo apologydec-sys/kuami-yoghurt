@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Response Error — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <div class="error-card">
+      <div class="error-card__icon" aria-hidden="true">⚠</div>
+      <h1 class="error-card__title">Unable to Process Response</h1>
+      <p class="error-card__text">{{ error }}</p>
+      {% if booking %}
+      <a href="{% url 'bookings:track' token=booking.token %}" class="btn btn-outline">View Booking</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

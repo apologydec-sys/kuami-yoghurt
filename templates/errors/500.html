@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}500 — Server Error — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="error-page">
+  <div class="container">
+    <div class="error-page__content">
+      <div class="error-page__code" aria-hidden="true">500</div>
+      <h1 class="error-page__title">Server Error</h1>
+      <p class="error-page__text">Something went wrong on our end. Please try again in a moment.</p>
+      <div class="error-page__actions">
+        <a href="/" class="btn btn-primary">Back to Home</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

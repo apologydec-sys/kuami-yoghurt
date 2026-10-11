@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ video.title }} — DJ Kuami Yoghurt{% endblock %}
+{% block meta_description %}{{ video.description|truncatechars:160 }}{% endblock %}
+
+{% block content %}
+
+<section class="section">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}">Home</a>
+      <span aria-hidden="true"> / </span>
+      <a href="{% url 'videos:list' %}">Videos</a>
+      <span aria-hidden="true"> / </span>
+      <span aria-current="page">{{ video.title }}</span>
+    </nav>
+
+    {% if video.category %}<span class="card__badge" style="display:inline-block;margin-bottom:1rem">{{ video.category.name }}</span>{% endif %}
+    <h1 class="detail-title">{{ video.title }}</h1>
+    {% if video.published_at %}<time class="detail-meta" datetime="{{ video.published_at|date:'c' }}">{{ video.published_at|date:"F j, Y" }}</time>{% endif %}
+
+    <!-- Video Player -->
+    <div class="video-wrapper">
+      {% if video.video_file %}
+      <video
+        class="video-player"
+        controls
+        preload="metadata"
+        aria-label="{{ video.title }}"
+        {% if video.thumbnail %}poster="{{ video.thumbnail.url }}"{% endif %}
+      >
+        <source src="{{ video.video_file.url }}" />
+        <p>Your browser does not support HTML5 video. <a href="{{ video.video_file.url }}">Download the video</a>.</p>
+      </video>
+      {% else %}
+      <div class="unavailable-notice" role="status">
+        <p>Video is not available yet.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if video.description %}
+    <div class="prose" style="margin-top:1.5rem">{{ video.description|linebreaks }}</div>
+    {% endif %}
+
+    <p style="margin-top:2rem"><a href="{% url 'videos:list' %}" class="btn btn-outline">← Back to Videos</a></p>
+  </div>
+</section>
+
+{% endblock %}

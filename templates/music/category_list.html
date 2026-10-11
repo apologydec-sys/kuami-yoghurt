@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Music Categories — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">Music Categories</h1>
+  </div>
+</section>
+<section class="section">
+  <div class="container">
+    {% if categories %}
+    <div class="card-grid card-grid--3">
+      {% for cat in categories %}
+      <div class="card">
+        <div class="card__body">
+          <h2 class="card__title">{{ cat.name }}</h2>
+          {% if cat.description %}<p class="card__text">{{ cat.description }}</p>{% endif %}
+          <a href="{% url 'music:mix_list' %}?category={{ cat.slug }}" class="btn btn-outline">View Mixes</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <p class="empty-state__text">No categories found.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

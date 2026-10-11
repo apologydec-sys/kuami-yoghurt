@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: dj-kuami-yoghurt
+    env: python
+    plan: free
+    buildCommand: python -m pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput --upload-unhashed-files
+    startCommand: gunicorn config.wsgi:application --workers 2 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: RENDER
+        value: "true"

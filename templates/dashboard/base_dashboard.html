@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body_class %}portal-shell{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-layout { display: flex; min-height: calc(100vh - 70px); }
+.dashboard-sidebar { width: 240px; flex-shrink: 0; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 1.5rem 0; position: sticky; top: 70px; height: calc(100vh - 70px); overflow-y: auto; }
+.dashboard-main { flex: 1; padding: 2rem; min-width: 0; }
+.sidebar-nav__group { margin-bottom: 1.5rem; }
+.sidebar-nav__label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); padding: 0 1.25rem; margin-bottom: 0.5rem; }
+.sidebar-nav__link { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1.25rem; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: all 0.2s; }
+.sidebar-nav__link:hover, .sidebar-nav__link--active { color: var(--text-primary); background: rgba(201,168,76,0.08); border-left: 2px solid var(--accent); }
+.dashboard-page-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem; }
+@media (max-width: 768px) {
+  .dashboard-layout { flex-direction: column; }
+  .dashboard-sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <aside class="dashboard-sidebar" aria-label="Dashboard navigation">
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav__group">
+        <p class="sidebar-nav__label">Overview</p>
+        <a href="{% url 'dashboard:home' %}" class="sidebar-nav__link {% if request.resolver_match.url_name == 'home' %}sidebar-nav__link--active{% endif %}">
+          📊 Dashboard
+        </a>
+      </div>
+      <div class="sidebar-nav__group">
+        <p class="sidebar-nav__label">Bookings</p>
+        <a href="{% url 'dashboard:bookings' %}" class="sidebar-nav__link {% if 'booking' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          📅 Bookings
+        </a>
+        <a href="{% url 'dashboard:messages' %}" class="sidebar-nav__link {% if request.resolver_match.url_name == 'messages' %}sidebar-nav__link--active{% endif %}">
+          ✉️ Messages
+        </a>
+        <a href="{% url 'dashboard:chat' %}" class="sidebar-nav__link {% if 'chat' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          💬 Chat
+        </a>
+      </div>
+      <div class="sidebar-nav__group">
+        <p class="sidebar-nav__label">Content</p>
+        <a href="{% url 'dashboard:music' %}" class="sidebar-nav__link {% if 'music' in request.resolver_match.url_name or 'mix' in request.resolver_match.url_name or 'track' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          🎵 Music
+        </a>
+        <a href="{% url 'dashboard:videos' %}" class="sidebar-nav__link {% if 'video' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          🎬 Videos
+        </a>
+        <a href="{% url 'dashboard:gallery' %}" class="sidebar-nav__link {% if 'gallery' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          🖼 Gallery
+        </a>
+      </div>
+      <div class="sidebar-nav__group">
+        <p class="sidebar-nav__label">Settings</p>
+        <a href="{% url 'dashboard:site_settings' %}" class="sidebar-nav__link {% if request.resolver_match.url_name == 'site_settings' %}sidebar-nav__link--active{% endif %}">
+          ⚙️ Site Settings
+        </a>
+        <a href="{% url 'admin:index' %}" class="sidebar-nav__link">
+          🔧 Django Admin
+        </a>
+        <a href="{% url 'logout' %}" class="sidebar-nav__link" onclick="return confirm('Log out?')">
+          🚪 Logout
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="dashboard-main" id="dashboard-content">
+    {% block dashboard_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

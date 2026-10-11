@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-004",
+  "type": "chore",
+  "description": "Polish, security hardening, deployment prep, and final integration. Adds Render deployment config, security headers, rate limiting via session-based counters (no extra packages), custom error pages wired to settings, a createsuperuser management command helper, collectstatic verification, and a .env.example documenting all required environment variables. Depends on FEAT-001 through FEAT-003.",
+  "status": "pending",
+  "steps": [
+    "1. Add security settings to config/settings.py Render block: SECURE_HSTS_SECONDS=31536000, SECURE_HSTS_INCLUDE_SUBDOMAINS=True, SECURE_HSTS_PRELOAD=True, SECURE_CONTENT_TYPE_NOSNIFF=True, X_FRAME_OPTIONS='DENY', SECURE_REFERRER_POLICY='same-origin'. Also add CSRF_TRUSTED_ORIGINS from env var DJANGO_CSRF_TRUSTED_ORIGINS (comma-split list).",
+    "2. Wire custom error handlers in config/urls.py: handler404 = 'apps.core.views.handler404'; handler500 = 'apps.core.views.handler500'. Ensure templates/errors/404.html and templates/errors/500.html exist (created in FEAT-003).",
+    "3. Create render.yaml in the project root: define a web service with build command 'pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate', start command 'gunicorn config.wsgi:application --workers 2 --bind 0.0.0.0:$PORT', and envVars block listing DJANGO_SECRET_KEY, DJANGO_DEBUG=false, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, RENDER=true.",
+    "4. Create .env.example in the project root listing all required environment variables with placeholder values: DJANGO_SECRET_KEY, DJANGO_DEBUG, DJANGO_ALLOWED_HOSTS, CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, RENDER (optional), DJANGO_CSRF_TRUSTED_ORIGINS (optional).",
+    "5. Ensure .gitignore exists and contains: .env, db.sqlite3, staticfiles/, media/, __pycache__/, *.pyc, .venv/. Create it if missing.",
+    "6. Add a SiteSettings migration data fixture: create a post-migrate signal in apps/core/apps.py that calls create_site_settings management command logic inline (not subprocess) — creates default SiteSettings row if table exists and row count is 0.",
+    "7. Run python manage.py test apps --verbosity=2 as a full regression and fix any remaining issues.",
+    "8. Run python manage.py collectstatic --noinput and verify staticfiles/ directory contains main.css and main.js.",
+    "9. Smoke-test the dev server: python manage.py runserver and verify / returns 200, /admin/ returns the login page, /bookings/book/ renders the form.",
+    "10. Update README.md with: project overview, local setup steps (clone, create venv, pip install -r requirements.txt, set env vars, migrate, createsuperuser, runserver), required environment variables table, Cloudinary setup instructions, Render deployment steps."
+  ],
+  "acceptance_criteria": [
+    "python manage.py check --deploy returns 0 critical issues (warnings about HTTPS are acceptable in dev)",
+    "python manage.py test apps --verbosity=2 passes all tests with 0 failures",
+    "python manage.py collectstatic --noinput completes without error",
+    "render.yaml exists and is valid YAML",
+    ".env.example exists and documents all environment variables",
+    "README.md contains setup instructions"
+  ],
+  "verification": [
+    ".venv\\Scripts\\python.exe manage.py check",
+    ".venv\\Scripts\\python.exe manage.py test apps --verbosity=2",
+    ".venv\\Scripts\\python.exe manage.py collectstatic --noinput"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

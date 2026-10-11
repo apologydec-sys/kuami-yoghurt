@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Bootstrap all 7 Django apps with models, migrations, admin registrations, and settings wiring. This is the foundation every other FEAT depends on. Creates all app skeletons, defines the full data model, runs migrations, and registers everything in settings/urls so Django check passes.",
+  "status": "completed",
+  "steps": [
+    "1. Add STATICFILES_DIRS, LOGIN_URL, LOGIN_REDIRECT_URL, LOGOUT_REDIRECT_URL, EMAIL_BACKEND, and context processor 'django.template.context_processors.debug' to config/settings.py. Add SESSION_COOKIE_AGE=86400. Keep all existing settings intact.",
+    "2. Create apps/core/ with __init__.py, apps.py (name='apps.core'), models.py (SiteSettings singleton: site_name, tagline, about_text, biography, profile_image CloudinaryField, whatsapp_number, email, facebook_url, instagram_url, twitter_url, youtube_url, is_active; ContactMessage: name, email, phone, subject, message, ip_address, created_at, is_read bool; Biography: same as about_text but richer — title, body, profile_image, is_published), admin.py registering all models, migrations/__init__.py.",
+    "3. Create apps/music/ with __init__.py, apps.py (name='apps.music'), models.py: Category(name, slug, description, order); Mix(title, slug, description, cover_image CloudinaryField, audio_file CloudinaryField(resource_type='raw'), category FK, duration_seconds, is_published, is_featured, published_at, tracklist TextField, play_count, created_at, updated_at); Track(title, slug, description, cover_image CloudinaryField, audio_file CloudinaryField(resource_type='raw'), mix FK nullable, category FK, duration_seconds, is_published, is_featured, published_at, play_count, created_at, updated_at). admin.py with list_display, search, filters. migrations/__init__.py.",
+    "4. Create apps/videos/ with __init__.py, apps.py (name='apps.videos'), models.py: VideoCategory(name, slug, order); Video(title, slug, description, video_file CloudinaryField(resource_type='video'), thumbnail CloudinaryField, category FK nullable, is_published, is_featured, published_at, duration_seconds, play_count, created_at, updated_at). admin.py. migrations/__init__.py.",
+    "5. Create apps/gallery/ with __init__.py, apps.py (name='apps.gallery'), models.py: GalleryCategory(name, slug, order); GalleryImage(title, description, image CloudinaryField, category FK nullable, is_published, is_featured, order, created_at, updated_at). admin.py. migrations/__init__.py.",
+    "6. Create apps/bookings/ with __init__.py, apps.py (name='apps.bookings'), models.py: EVENT_TYPES choices (weddings, birthday, private_party, school, festival, corporate, funeral, club, other); BOOKING_STATUSES choices (received, under_review, quotation_sent, awaiting_response, confirmed, in_progress, completed, declined, cancelled); Booking(reference auto UUID4 unique, token secrets.token_urlsafe(48) unique indexed, customer_name, customer_email, customer_phone, event_type, event_date DateField, event_time TimeField nullable, event_location, guest_count PositiveIntegerField nullable, music_preferences TextField, additional_requirements TextField, status default=received, internal_notes TextField, created_at, updated_at, ip_address); Quotation(booking OneToOne, amount DecimalField(10,2), currency default=GHS, details TextField, terms TextField, expires_at DateTimeField nullable, created_at, updated_at); BookingStatusHistory(booking FK, status, changed_by ForeignKey(User) nullable, note, changed_at); BookingMessage — used for customer-visible updates (booking FK, message, is_from_dj bool, created_at). admin.py with inline Quotation, BookingStatusHistory. migrations/__init__.py.",
+    "7. Create apps/chat/ with __init__.py, apps.py (name='apps.chat'), models.py: Conversation(session_key unique, customer_name, customer_email, customer_phone nullable, booking FK to apps.bookings.Booking nullable, created_at, updated_at, is_archived); Message(conversation FK, content TextField max_length=2000, is_from_dj bool default=False, is_read bool default=False, created_at). admin.py. migrations/__init__.py.",
+    "8. Create apps/dashboard/ with __init__.py, apps.py (name='apps.dashboard'). No models (uses other apps' models). admin.py empty. migrations/__init__.py (empty migrations).",
+    "9. Add all 7 apps to INSTALLED_APPS in config/settings.py in this order after existing entries: 'apps.core', 'apps.music', 'apps.videos', 'apps.gallery', 'apps.bookings', 'apps.chat', 'apps.dashboard'.",
+    "10. Create templates/videos/ and templates/dashboard/ directories (they are not in the existing template subdirs).",
+    "11. Run makemigrations for all apps in dependency order: python manage.py makemigrations core music videos gallery bookings chat. Then python manage.py migrate.",
+    "12. Create a management command apps/core/management/commands/create_site_settings.py that creates a default SiteSettings row if none exists.",
+    "13. Register apps/dashboard with a minimal apps.py — it has no models of its own, just views accessing other apps."
+  ],
+  "acceptance_criteria": [
+    "python manage.py check reports 0 issues",
+    "python manage.py makemigrations --check exits 0 (no unmigrated changes)",
+    "python manage.py migrate completes without error",
+    "python manage.py test apps.core apps.music apps.videos apps.gallery apps.bookings apps.chat --verbosity=2 passes (basic model creation tests)",
+    "All 7 app labels appear in python manage.py showmigrations output"
+  ],
+  "verification": [
+    ".venv\\Scripts\\python.exe manage.py check",
+    ".venv\\Scripts\\python.exe manage.py makemigrations --check",
+    ".venv\\Scripts\\python.exe manage.py migrate",
+    ".venv\\Scripts\\python.exe manage.py test apps.core apps.music apps.videos apps.gallery apps.bookings apps.chat --verbosity=2"
+  ],
+  "blocked_reason": null,
+  "findings": "All 7 app skeletons created under apps/. 23 model-creation tests pass. Deprecated STATICFILES_STORAGE key removed; STORAGES dict already correctly configured. STATICFILES_DIRS, MEDIA_URL, MEDIA_ROOT, LOGIN_URL, LOGIN_REDIRECT_URL, LOGOUT_REDIRECT_URL, EMAIL_BACKEND, SESSION_COOKIE_AGE, and debug context processor added to settings. Template subdirs videos/, dashboard/, errors/ created. Management command apps/core/management/commands/create_site_settings.py created. All migrations generated and applied cleanly. django check: 0 issues."
+}

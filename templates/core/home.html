@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}DJ Kuami Yoghurt — Official Website{% endblock %}
+
+{% block content %}
+
+<!-- ======================================================
+     HERO
+====================================================== -->
+<section class="hero hero--immersive" aria-label="DJ Kuami Yoghurt">
+  <div class="hero__content container">
+    <div class="hero__copy">
+      <p class="hero__eyebrow"><span class="hero__eyebrow-mark" aria-hidden="true"></span> A sound made for the moment</p>
+      <h1 class="hero__title">DJ Kuami<br><span>Yoghurt</span></h1>
+      <p class="hero__subtitle">Issac Botchew · Professional DJ &amp; Music Artist</p>
+      <p class="hero__description">Discover the mixes, performances and stories behind the sound. Bring that energy to your next event.</p>
+      {% if site_settings and site_settings.tagline %}
+      <p class="hero__tagline">{{ site_settings.tagline }}</p>
+      {% endif %}
+      <div class="hero__actions">
+        <a href="{% url 'music:mix_list' %}" class="btn btn-primary btn-lg">Explore Music <span aria-hidden="true">↗</span></a>
+        <a href="{% url 'videos:list' %}" class="btn btn-outline btn-lg">Watch Videos</a>
+        <a href="{% url 'bookings:create' %}" class="hero__booking-link">Book the DJ <span aria-hidden="true">→</span></a>
+      </div>
+      <p class="hero__credit">MIXES <span>·</span> LIVE MOMENTS <span>·</span> GOOD ENERGY</p>
+    </div>
+
+    <div class="hero-scene" aria-hidden="true">
+      <div class="hero-scene__beam hero-scene__beam--violet"></div>
+      <div class="hero-scene__beam hero-scene__beam--cyan"></div>
+      <div class="hero-scene__crowd"></div>
+      <div class="hero-scene__equalizer">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+
+      <div class="hero-toy hero-toy--mint">
+        <span class="hero-toy__ear hero-toy__ear--left"></span><span class="hero-toy__ear hero-toy__ear--right"></span>
+        <span class="hero-toy__face"><i></i><i></i><b></b></span><span class="hero-toy__arm hero-toy__arm--left"></span><span class="hero-toy__arm hero-toy__arm--right"></span>
+        <span class="hero-toy__leg hero-toy__leg--left"></span><span class="hero-toy__leg hero-toy__leg--right"></span>
+      </div>
+      <div class="hero-toy hero-toy--coral">
+        <span class="hero-toy__ear hero-toy__ear--left"></span><span class="hero-toy__ear hero-toy__ear--right"></span>
+        <span class="hero-toy__face"><i></i><i></i><b></b></span><span class="hero-toy__arm hero-toy__arm--left"></span><span class="hero-toy__arm hero-toy__arm--right"></span>
+        <span class="hero-toy__leg hero-toy__leg--left"></span><span class="hero-toy__leg hero-toy__leg--right"></span>
+      </div>
+      <div class="hero-toy hero-toy--gold">
+        <span class="hero-toy__ear hero-toy__ear--left"></span><span class="hero-toy__ear hero-toy__ear--right"></span>
+        <span class="hero-toy__face"><i></i><i></i><b></b></span><span class="hero-toy__arm hero-toy__arm--left"></span><span class="hero-toy__arm hero-toy__arm--right"></span>
+        <span class="hero-toy__leg hero-toy__leg--left"></span><span class="hero-toy__leg hero-toy__leg--right"></span>
+      </div>
+
+      <div class="hero-dj">
+        <span class="hero-dj__headphones"></span>
+        <span class="hero-dj__head"><i class="hero-dj__eye hero-dj__eye--left"></i><i class="hero-dj__eye hero-dj__eye--right"></i><b></b></span>
+        <span class="hero-dj__neck"></span>
+        <span class="hero-dj__body"><i class="hero-dj__shirt-mark"></i></span>
+        <span class="hero-dj__arm hero-dj__arm--left"></span><span class="hero-dj__arm hero-dj__arm--right"></span>
+        <span class="hero-dj__hand hero-dj__hand--left"></span><span class="hero-dj__hand hero-dj__hand--right"></span>
+      </div>
+
+      <div class="hero-console">
+        <div class="hero-console__deck hero-console__deck--left"><span class="hero-console__record"><i></i></span><span class="hero-console__tonearm"></span></div>
+        <div class="hero-console__mixer"><i></i><i></i><i></i><b></b><b></b><b></b></div>
+        <div class="hero-console__deck hero-console__deck--right"><span class="hero-console__record"><i></i></span><span class="hero-console__tonearm"></span></div>
+      </div>
+      <span class="hero-scene__floor"></span>
+      <span class="hero-scene__caption">ORIGINAL ILLUSTRATION <i></i> NOT A PHOTOGRAPH</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================
+     FEATURED MIXES
+====================================================== -->
+<section class="section" aria-labelledby="mixes-heading">
+  <div class="container">
+    <div class="section__header">
+      <h2 class="section__title" id="mixes-heading">Featured Mixes</h2>
+      <a href="{% url 'music:mix_list' %}" class="section__link">View all mixes →</a>
+    </div>
+
+    {% if featured_mixes %}
+    <div class="card-grid card-grid--4">
+      {% for mix in featured_mixes %}
+      <article class="card card--media">
+        <a href="{% url 'music:mix_detail' mix.slug %}" class="card__image-link" aria-label="{{ mix.title }}">
+          {% if mix.cover_image %}
+          <img src="{{ mix.cover_image.url }}" alt="{{ mix.title }} cover art" class="card__image" loading="lazy" />
+          {% else %}
+          <div class="card__image card__image--placeholder" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          {% endif %}
+          <div class="card__play-overlay" aria-hidden="true">▶</div>
+        </a>
+        <div class="card__body">
+          <h3 class="card__title"><a href="{% url 'music:mix_detail' mix.slug %}">{{ mix.title }}</a></h3>
+          {% if mix.category %}<span class="card__badge">{{ mix.category.name }}</span>{% endif %}
+          {% if mix.description %}<p class="card__text">{{ mix.description|truncatechars:80 }}</p>{% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">🎧</div>
+      <p class="empty-state__text">Mixes coming soon. Check back later.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ======================================================
+     FEATURED TRACKS
+====================================================== -->
+{% if featured_tracks %}
+<section class="section section--alt" aria-labelledby="tracks-heading">
+  <div class="container">
+    <div class="section__header">
+      <h2 class="section__title" id="tracks-heading">Latest Tracks</h2>
+      <a href="{% url 'music:track_list' %}" class="section__link">View all tracks →</a>
+    </div>
+    <div class="track-list">
+      {% for track in featured_tracks %}
+      <div class="track-row">
+        <div class="track-row__cover">
+          {% if track.cover_image %}
+          <img src="{{ track.cover_image.url }}" alt="{{ track.title }}" width="48" height="48" loading="lazy" />
+          {% else %}
+          <div class="track-row__cover-placeholder" aria-hidden="true">♪</div>
+          {% endif %}
+        </div>
+        <div class="track-row__info">
+          <a href="{% url 'music:track_detail' track.slug %}" class="track-row__title">{{ track.title }}</a>
+          {% if track.category %}<span class="track-row__cat">{{ track.category.name }}</span>{% endif %}
+        </div>
+        <a href="{% url 'music:track_detail' track.slug %}" class="track-row__play" aria-label="Play {{ track.title }}">▶</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ======================================================
+     FEATURED VIDEOS
+====================================================== -->
+<section class="section" aria-labelledby="videos-heading">
+  <div class="container">
+    <div class="section__header">
+      <h2 class="section__title" id="videos-heading">Videos</h2>
+      <a href="{% url 'videos:list' %}" class="section__link">View all videos →</a>
+    </div>
+
+    {% if featured_videos %}
+    <div class="card-grid card-grid--3">
+      {% for video in featured_videos %}
+      <article class="card card--media">
+        <a href="{% url 'videos:detail' video.slug %}" class="card__image-link" aria-label="{{ video.title }}">
+          {% if video.thumbnail %}
+          <img src="{{ video.thumbnail.url }}" alt="{{ video.title }} thumbnail" class="card__image" loading="lazy" />
+          {% else %}
+          <div class="card__image card__image--placeholder" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 10.5v-5l4.5 2.5-4.5 2.5z"/></svg>
+          </div>
+          {% endif %}
+          <div class="card__play-overlay card__play-overlay--video" aria-hidden="true">▶</div>
+        </a>
+        <div class="card__body">
+          <h3 class="card__title"><a href="{% url 'videos:detail' video.slug %}">{{ video.title }}</a></h3>
+          {% if video.category %}<span class="card__badge">{{ video.category.name }}</span>{% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">🎬</div>
+      <p class="empty-state__text">Videos coming soon.</p>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ======================================================
+     GALLERY STRIP
+====================================================== -->
+{% if featured_gallery %}
+<section class="section section--alt" aria-labelledby="gallery-heading">
+  <div class="container">
+    <div class="section__header">
+      <h2 class="section__title" id="gallery-heading">Gallery</h2>
+      <a href="{% url 'gallery:index' %}" class="section__link">View full gallery →</a>
+    </div>
+    <div class="gallery-strip">
+      {% for img in featured_gallery %}
+      <a href="{% url 'gallery:detail' img.pk %}" class="gallery-strip__item" aria-label="{{ img.title }}">
+        <img src="{{ img.image.url }}" alt="{{ img.title }}" loading="lazy" />
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ======================================================
+     BOOKING CTA
+====================================================== -->
+<section class="booking-cta" aria-labelledby="cta-heading">
+  <div class="container booking-cta__inner">
+    <div class="booking-cta__text">
+      <h2 class="booking-cta__title" id="cta-heading">Ready to Book DJ Kuami Yoghurt?</h2>
+      <p class="booking-cta__sub">Weddings · Birthdays · Parties · Corporate Events · Funerals · Festivals</p>
+    </div>
+    <div class="booking-cta__actions">
+      <a href="{% url 'bookings:create' %}" class="btn btn-primary btn-lg">Book Now</a>
+      {% if site_settings and site_settings.whatsapp_number %}
+      <a href="https://wa.me/{{ site_settings.whatsapp_number }}" class="btn btn-outline btn-lg" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

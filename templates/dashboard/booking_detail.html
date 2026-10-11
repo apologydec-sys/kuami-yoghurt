@@ -1,0 +1,145 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Booking {{ booking.reference }} — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+  <a href="{% url 'dashboard:bookings' %}" class="btn btn-outline btn-sm">← Bookings</a>
+  <h1 class="dashboard-page-title" style="margin:0">Booking Detail</h1>
+</div>
+
+<div class="detail-grid">
+
+  <!-- Left: Booking info -->
+  <div>
+    <section class="detail-card">
+      <h2 class="detail-card__title">Customer</h2>
+      <dl class="detail-list">
+        <div class="detail-list__item"><dt>Name</dt><dd>{{ booking.customer_name }}</dd></div>
+        <div class="detail-list__item"><dt>Email</dt><dd><a href="mailto:{{ booking.customer_email }}">{{ booking.customer_email }}</a></dd></div>
+        <div class="detail-list__item"><dt>Phone</dt><dd>{{ booking.customer_phone }}</dd></div>
+        <div class="detail-list__item"><dt>IP</dt><dd>{{ booking.ip_address|default:"—" }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="detail-card">
+      <h2 class="detail-card__title">Event</h2>
+      <dl class="detail-list">
+        <div class="detail-list__item"><dt>Type</dt><dd>{{ booking.get_event_type_display }}</dd></div>
+        <div class="detail-list__item"><dt>Date</dt><dd>{{ booking.event_date|date:"F j, Y" }}{% if booking.event_time %} at {{ booking.event_time|time:"g:i A" }}{% endif %}</dd></div>
+        <div class="detail-list__item"><dt>Location</dt><dd>{{ booking.event_location }}</dd></div>
+        {% if booking.guest_count %}<div class="detail-list__item"><dt>Guests</dt><dd>{{ booking.guest_count }}</dd></div>{% endif %}
+        {% if booking.music_preferences %}<div class="detail-list__item"><dt>Music Prefs</dt><dd>{{ booking.music_preferences }}</dd></div>{% endif %}
+        {% if booking.additional_requirements %}<div class="detail-list__item"><dt>Additional</dt><dd>{{ booking.additional_requirements }}</dd></div>{% endif %}
+      </dl>
+    </section>
+
+    <!-- Status History -->
+    <section class="detail-card">
+      <h2 class="detail-card__title">Status History</h2>
+      {% if history %}
+      <ol class="status-timeline" reversed>
+        {% for entry in history %}
+        <li class="status-timeline__item">
+          <span class="status-timeline__dot" aria-hidden="true"></span>
+          <div class="status-timeline__content">
+            <strong>{{ entry.get_status_display }}</strong>
+            {% if entry.changed_by %}<span class="text-muted"> by {{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>{% endif %}
+            <time class="status-timeline__time" datetime="{{ entry.changed_at|date:'c' }}">{{ entry.changed_at|date:"M j, Y, g:i A" }}</time>
+            {% if entry.note %}<p class="status-timeline__note">{{ entry.note }}</p>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="text-muted">No history entries.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <!-- Right: Forms -->
+  <div>
+
+    <!-- Current Status -->
+    <div class="detail-card">
+      <h2 class="detail-card__title">Current Status</h2>
+      <span class="status-pill status-pill--{{ booking.status }} status-pill--lg">{{ booking.get_status_display }}</span>
+    </div>
+
+    <!-- Update Status -->
+    <section class="detail-card" aria-labelledby="status-form-heading">
+      <h2 class="detail-card__title" id="status-form-heading">Update Status</h2>
+      <form method="post" action="{% url 'dashboard:booking_status' reference=booking.reference %}">
+        {% csrf_token %}
+        <div class="form__group">
+          <label class="form__label" for="{{ status_form.status.id_for_label }}">New Status</label>
+          {{ status_form.status }}
+        </div>
+        <div class="form__group">
+          <label class="form__label" for="{{ status_form.note.id_for_label }}">Note (optional)</label>
+          {{ status_form.note }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Update Status</button>
+      </form>
+    </section>
+
+    <!-- Quotation -->
+    <section class="detail-card" aria-labelledby="quotation-form-heading">
+      <h2 class="detail-card__title" id="quotation-form-heading">
+        {% if quotation %}Update Quotation{% else %}Create Quotation{% endif %}
+      </h2>
+      {% if quotation %}
+      <p class="text-muted" style="margin-bottom:1rem">Current: <strong>{{ quotation.currency }} {{ quotation.amount }}</strong></p>
+      {% endif %}
+      <form method="post" action="{% url 'dashboard:quotation' reference=booking.reference %}">
+        {% csrf_token %}
+        <div class="form__row form__row--2col">
+          <div class="form__group">
+            <label class="form__label">Amount</label>
+            {{ quotation_form.amount }}
+          </div>
+          <div class="form__group">
+            <label class="form__label">Currency</label>
+            {{ quotation_form.currency }}
+          </div>
+        </div>
+        <div class="form__group">
+          <label class="form__label">Details</label>
+          {{ quotation_form.details }}
+        </div>
+        <div class="form__group">
+          <label class="form__label">Terms</label>
+          {{ quotation_form.terms }}
+        </div>
+        <div class="form__group">
+          <label class="form__label">Expires At (optional)</label>
+          {{ quotation_form.expires_at }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save Quotation</button>
+      </form>
+    </section>
+
+    <!-- Internal Notes -->
+    <section class="detail-card" aria-labelledby="notes-form-heading">
+      <h2 class="detail-card__title" id="notes-form-heading">Internal Notes</h2>
+      <form method="post" action="{% url 'dashboard:booking_notes' reference=booking.reference %}">
+        {% csrf_token %}
+        <div class="form__group">
+          {{ note_form.internal_notes }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save Notes</button>
+      </form>
+    </section>
+
+    <!-- WhatsApp Notification -->
+    {% if booking.customer_phone %}
+    <div class="detail-card">
+      <h2 class="detail-card__title">Notify Customer</h2>
+      <p class="text-muted" style="font-size:0.85rem">This opens WhatsApp with a pre-filled message. You send it manually.</p>
+      <a href="https://wa.me/{{ booking.customer_phone|cut:' '|cut:'+' }}?text=Hi%20{{ booking.customer_name|urlencode }}%2C%20your%20booking%20status%20has%20been%20updated%20to%3A%20{{ booking.get_status_display|urlencode }}" class="btn btn-primary btn-sm" target="_blank" rel="noopener noreferrer">Open WhatsApp</a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

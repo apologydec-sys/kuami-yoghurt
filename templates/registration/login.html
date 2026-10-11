@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Login — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width:420px">
+    <div class="login-card">
+      <div class="login-card__brand">
+        <h1 class="login-card__title">DJ Kuami Yoghurt</h1>
+        <p class="login-card__sub">Admin Login</p>
+      </div>
+
+      {% if form.errors %}
+      <div class="alert alert--error" role="alert">
+        <p>Incorrect username or password. Please try again.</p>
+      </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+      <div class="alert alert--error" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post" action="{{ request.path }}" class="form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+
+        <div class="form__group {% if form.username.errors %}form__group--error{% endif %}">
+          <label class="form__label" for="{{ form.username.id_for_label }}">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<p class="form__help form__help--error" role="alert">{{ form.username.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="form__group {% if form.password.errors %}form__group--error{% endif %}">
+          <label class="form__label" for="{{ form.password.id_for_label }}">Password</label>
+          {{ form.password }}
+          {% if form.password.errors %}<p class="form__help form__help--error" role="alert">{{ form.password.errors.0 }}</p>{% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

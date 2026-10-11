@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Message Sent — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <div class="success-card">
+      <div class="success-card__icon" aria-hidden="true">✓</div>
+      <h1 class="success-card__title">Message Sent!</h1>
+      <p class="success-card__text">Thank you for reaching out. Your message has been received and we will get back to you as soon as possible.</p>
+      <div class="success-card__actions">
+        <a href="{% url 'core:home' %}" class="btn btn-primary">Back to Home</a>
+        <a href="{% url 'bookings:create' %}" class="btn btn-outline">Book an Event</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

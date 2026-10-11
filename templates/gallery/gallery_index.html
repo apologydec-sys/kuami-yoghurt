@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gallery — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">Gallery</h1>
+    <p class="page-hero__sub">Moments from performances and events</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    {% if categories %}
+    <nav class="filter-tabs" aria-label="Gallery categories">
+      <a href="{% url 'gallery:index' %}" class="filter-tabs__tab {% if not request.GET.category %}filter-tabs__tab--active{% endif %}">All</a>
+      {% for cat in categories %}
+      <a href="?category={{ cat.slug }}" class="filter-tabs__tab {% if request.GET.category == cat.slug %}filter-tabs__tab--active{% endif %}">{{ cat.name }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+
+    {% if images %}
+    <!-- Gallery grid with lightbox -->
+    <div class="gallery-grid" id="galleryGrid" role="list">
+      {% for img in images %}
+      <button
+        class="gallery-grid__item"
+        role="listitem"
+        data-lightbox-index="{{ forloop.counter0 }}"
+        data-lightbox-src="{{ img.image.url }}"
+        data-lightbox-title="{{ img.title }}"
+        aria-label="View {{ img.title }}"
+        type="button"
+      >
+        <img src="{{ img.image.url }}" alt="{{ img.title }}" loading="lazy" />
+        <div class="gallery-grid__overlay">
+          <span class="gallery-grid__title">{{ img.title }}</span>
+        </div>
+      </button>
+      {% endfor %}
+    </div>
+
+    <!-- Lightbox overlay -->
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" hidden>
+      <button class="lightbox__close" id="lightboxClose" aria-label="Close image viewer">×</button>
+      <button class="lightbox__prev" id="lightboxPrev" aria-label="Previous image">‹</button>
+      <button class="lightbox__next" id="lightboxNext" aria-label="Next image">›</button>
+      <div class="lightbox__content">
+        <img id="lightboxImg" src="" alt="" class="lightbox__image" />
+        <p class="lightbox__caption" id="lightboxCaption"></p>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">📷</div>
+      <h2 class="empty-state__title">No images yet</h2>
+      <p class="empty-state__text">Gallery images will appear here once they are published.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.initGalleryLightbox) window.initGalleryLightbox();
+  });
+</script>
+{% endblock %}

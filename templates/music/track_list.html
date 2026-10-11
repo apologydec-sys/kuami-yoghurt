@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tracks — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+
+<section class="page-hero page-hero--short">
+  <div class="container">
+    <h1 class="page-hero__title">Tracks</h1>
+    <p class="page-hero__sub">Individual tracks and releases</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    <form method="get" class="filter-bar" role="search" aria-label="Filter tracks">
+      <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search tracks…" class="filter-bar__input" aria-label="Search" />
+      <select name="category" class="filter-bar__select" aria-label="Filter by category">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">Filter</button>
+      {% if request.GET.q or request.GET.category %}
+      <a href="{% url 'music:track_list' %}" class="btn btn-outline">Clear</a>
+      {% endif %}
+    </form>
+
+    {% if tracks %}
+    <div class="track-list track-list--full">
+      {% for track in tracks %}
+      <div class="track-row">
+        <div class="track-row__cover">
+          {% if track.cover_image %}
+          <img src="{{ track.cover_image.url }}" alt="{{ track.title }}" width="56" height="56" loading="lazy" />
+          {% else %}
+          <div class="track-row__cover-placeholder" aria-hidden="true">♪</div>
+          {% endif %}
+        </div>
+        <div class="track-row__info">
+          <a href="{% url 'music:track_detail' track.slug %}" class="track-row__title">{{ track.title }}</a>
+          {% if track.category %}<span class="track-row__cat">{{ track.category.name }}</span>{% endif %}
+          {% if track.mix %}<span class="track-row__cat">Mix: {{ track.mix.title }}</span>{% endif %}
+        </div>
+        {% if track.published_at %}
+        <time class="track-row__date" datetime="{{ track.published_at|date:'c' }}">{{ track.published_at|date:"M j, Y" }}</time>
+        {% endif %}
+        <a href="{% url 'music:track_detail' track.slug %}" class="track-row__play" aria-label="Play {{ track.title }}">▶</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon" aria-hidden="true">🎵</div>
+      <h2 class="empty-state__title">No tracks yet</h2>
+      <p class="empty-state__text">Tracks will appear here once they are published.</p>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Chat with {{ conversation.customer_name }} — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+  <a href="{% url 'dashboard:chat' %}" class="btn btn-outline btn-sm">← Conversations</a>
+  <h1 class="dashboard-page-title" style="margin:0">{{ conversation.customer_name }}</h1>
+  <span class="text-muted" style="font-size:0.85rem">{{ conversation.customer_email }}</span>
+</div>
+
+<!-- Message thread -->
+<div class="chat-window" style="max-height:500px">
+  <div class="chat-window__messages" style="max-height:400px;overflow-y:auto" id="adminChatMessages">
+    {% for message in chat_messages %}
+    <div class="chat-message {% if message.is_from_dj %}chat-message--dj{% else %}chat-message--customer{% endif %}">
+      <div class="chat-message__bubble">
+        <p class="chat-message__text">{{ message.content }}</p>
+        <time class="chat-message__time" datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"M j, g:i A" }}</time>
+      </div>
+    </div>
+    {% empty %}
+    <p class="chat-window__empty">No messages yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Reply form -->
+<div class="detail-card" style="margin-top:1rem">
+  <h2 class="detail-card__title">Send Reply</h2>
+  <form method="post" action="{% url 'dashboard:chat_reply' pk=conversation.pk %}" class="form">
+    {% csrf_token %}
+    <div class="form__group {% if form.content.errors %}form__group--error{% endif %}">
+      <label class="form__label sr-only" for="{{ form.content.id_for_label }}">Message</label>
+      {{ form.content }}
+      {% if form.content.errors %}<p class="form__help form__help--error">{{ form.content.errors.0 }}</p>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary">Send Reply</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Auto-scroll to bottom of messages.
+  var msgs = document.getElementById('adminChatMessages');
+  if (msgs) msgs.scrollTop = msgs.scrollHeight;
+</script>
+{% endblock %}

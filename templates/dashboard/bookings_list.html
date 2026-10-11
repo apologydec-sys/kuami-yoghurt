@@ -1,0 +1,59 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Bookings — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Bookings</h1>
+
+<form method="get" class="filter-bar" style="margin-bottom:1.5rem">
+  <input type="text" name="q" value="{{ search }}" placeholder="Search name or email…" class="filter-bar__input" />
+  <select name="status" class="filter-bar__select">
+    <option value="">All Statuses</option>
+    {% for value, label in booking_statuses %}
+    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <input type="date" name="date_from" value="{{ date_from }}" class="filter-bar__input" style="width:150px" title="From date" />
+  <input type="date" name="date_to" value="{{ date_to }}" class="filter-bar__input" style="width:150px" title="To date" />
+  <button type="submit" class="btn btn-primary">Filter</button>
+  <a href="{% url 'dashboard:bookings' %}" class="btn btn-outline">Clear</a>
+</form>
+
+{% if bookings %}
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Reference</th>
+        <th>Customer</th>
+        <th>Event</th>
+        <th>Event Date</th>
+        <th>Status</th>
+        <th>Submitted</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for booking in bookings %}
+      <tr>
+        <td class="mono">{{ booking.reference|truncatechars:12 }}</td>
+        <td>
+          <div>{{ booking.customer_name }}</div>
+          <small class="text-muted">{{ booking.customer_email }}</small>
+        </td>
+        <td>{{ booking.get_event_type_display }}</td>
+        <td>{{ booking.event_date|date:"M j, Y" }}</td>
+        <td><span class="status-pill status-pill--{{ booking.status }}">{{ booking.get_status_display }}</span></td>
+        <td>{{ booking.created_at|date:"M j, Y" }}</td>
+        <td><a href="{% url 'dashboard:booking_detail' reference=booking.reference %}" class="btn btn-outline btn-sm">Manage</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p class="empty-state__text">No bookings found{% if search or status_filter %} matching your filters{% endif %}.</p>
+</div>
+{% endif %}
+{% endblock %}

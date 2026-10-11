@@ -1,0 +1,44 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Chat — Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Conversations</h1>
+
+{% if conversations %}
+<div class="table-responsive">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Customer</th>
+        <th>Email</th>
+        <th>Unread</th>
+        <th>Last Activity</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for conv in conversations %}
+      <tr {% if conv.unread_count %}class="row--unread"{% endif %}>
+        <td>{{ conv.customer_name }}</td>
+        <td>{{ conv.customer_email }}</td>
+        <td>
+          {% if conv.unread_count %}
+          <span class="badge badge--accent">{{ conv.unread_count }}</span>
+          {% else %}
+          <span class="badge badge--muted">0</span>
+          {% endif %}
+        </td>
+        <td>{{ conv.updated_at|date:"M j, Y, g:i A" }}</td>
+        <td><a href="{% url 'dashboard:chat_reply' pk=conv.pk %}" class="btn btn-outline btn-sm">Reply</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p class="empty-state__text">No conversations yet.</p>
+</div>
+{% endif %}
+{% endblock %}

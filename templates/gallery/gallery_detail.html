@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ image.title }} — Gallery — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}">Home</a>
+      <span aria-hidden="true"> / </span>
+      <a href="{% url 'gallery:index' %}">Gallery</a>
+      <span aria-hidden="true"> / </span>
+      <span aria-current="page">{{ image.title }}</span>
+    </nav>
+
+    {% if image.category %}<span class="card__badge" style="display:inline-block;margin-bottom:1rem">{{ image.category.name }}</span>{% endif %}
+    <h1 class="detail-title">{{ image.title }}</h1>
+
+    <img src="{{ image.image.url }}" alt="{{ image.title }}" class="detail-full-image" />
+
+    {% if image.description %}
+    <div class="prose" style="margin-top:1rem">{{ image.description|linebreaks }}</div>
+    {% endif %}
+
+    <p style="margin-top:2rem"><a href="{% url 'gallery:index' %}" class="btn btn-outline">← Back to Gallery</a></p>
+  </div>
+</section>
+{% endblock %}
