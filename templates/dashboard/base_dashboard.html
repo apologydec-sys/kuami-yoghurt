@@ -88,6 +88,11 @@
         <a href="{% url 'dashboard:gallery' %}" class="sidebar-nav__link {% if 'gallery' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
           🖼 Gallery
         </a>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'portal:registered_users' %}" class="sidebar-nav__link {% if 'registered_user' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          👥 Registered Users
+        </a>
+        {% endif %}
       </div>
       <div class="sidebar-nav__group">
         <p class="sidebar-nav__label">Settings</p>
@@ -97,9 +102,10 @@
         <a href="{% url 'admin:index' %}" class="sidebar-nav__link">
           🔧 Django Admin
         </a>
-        <a href="{% url 'logout' %}" class="sidebar-nav__link" onclick="return confirm('Log out?')">
-          🚪 Logout
-        </a>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="sidebar-nav__link">🚪 Log out</button>
+        </form>
       </div>
     </nav>
   </aside>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Log in — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container account-card-wrap">
+    <div class="form-card account-card">
+      <h1 class="dashboard-page-title">Log in</h1>
+      <p class="account-card__intro">Sign in to continue your conversations.</p>
+      <form method="post" class="form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if form.non_field_errors %}
+        <div class="form__errors" role="alert">
+          <p class="form__error-msg">Username or password was not accepted.</p>
+        </div>
+        {% endif %}
+        {% for field in form %}
+        <div class="form__group {% if field.errors %}form__group--error{% endif %}">
+          <label class="form__label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}<p class="form__help form__help--error" role="alert">{{ error }}</p>{% endfor %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary btn-block">Log in</button>
+      </form>
+      <p class="account-card__switch">New here? <a href="{% url 'accounts:register' %}">Create an account</a>.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

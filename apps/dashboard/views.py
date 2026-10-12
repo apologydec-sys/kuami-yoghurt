@@ -7,11 +7,13 @@ from cloudinary.models import CloudinaryField
 from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.utils.dateparse import parse_date
 from django.http import Http404, HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -24,6 +26,8 @@ from django.db.models.fields.files import FileField
 from apps.bookings.models import Booking, BookingStatusHistory, Quotation
 from apps.bookings.utils import generate_whatsapp_link
 from apps.chat.models import Conversation, Message as ChatMessage
+from apps.chat.models import MessageModerationAction
+from apps.accounts.models import AdminUserAudit, UserProfile
 from apps.core.models import Biography, ContactMessage, SiteSettings
 from apps.gallery.models import GalleryCategory, GalleryImage
 from apps.music.models import Category, Mix, Track
@@ -1197,8 +1201,28 @@ class ChatAdminListView(View):
     template_name = "dashboard/chat_list.html"
 
     def get(self, request):
-        conversations = Conversation.objects.prefetch_related("chat_messages").order_by("-updated_at")
-        return render(request, self.template_name, {"conversations": conversations})
+        queryset = Conversation.objects.annotate(
+            unread_count=Count(
+                "chat_messages",
+                filter=Q(
+                    chat_messages__is_from_dj=False,
+                    chat_messages__is_read=False,
+                    chat_messages__deleted_at__isnull=True,
+                ),
+            )
+        ).order_by("-updated_at", "-pk")
+        page_obj = Paginator(queryset, 50).get_page(request.GET.get("page"))
+        now = timezone.now()
+        for conversation in page_obj.object_list:
+            conversation.customer_online = bool(
+                conversation.customer_last_seen
+                and conversation.customer_last_seen >= now - datetime.timedelta(minutes=2)
+            )
+        return render(
+            request,
+            self.template_name,
+            {"conversations": page_obj.object_list, "page_obj": page_obj},
+        )
 
 
 @method_decorator(staff_required, name="dispatch")
@@ -1208,14 +1232,26 @@ class ChatAdminReplyView(View):
     def get(self, request, pk):
         conversation = get_object_or_404(Conversation, pk=pk)
         # Mark all customer messages as read when admin views the conversation.
-        conversation.chat_messages.filter(is_from_dj=False, is_read=False).update(is_read=True)
-        chat_messages = conversation.chat_messages.all()
+        conversation.chat_messages.filter(
+            is_from_dj=False, is_read=False, deleted_at__isnull=True
+        ).update(is_read=True)
+        conversation.staff_last_seen = timezone.now()
+        conversation.save(update_fields=["staff_last_seen"])
+        conversation.customer_online = bool(
+            conversation.customer_last_seen
+            and conversation.customer_last_seen >= timezone.now() - datetime.timedelta(minutes=2)
+        )
+        chat_messages = conversation.chat_messages.order_by("-pk")[:50]
         from apps.chat.forms import MessageForm
         form = MessageForm()
         return render(
             request,
             self.template_name,
-            {"conversation": conversation, "chat_messages": chat_messages, "form": form},
+            {
+                "conversation": conversation,
+                "chat_messages": reversed(list(chat_messages)),
+                "form": form,
+            },
         )
 
     def post(self, request, pk):
@@ -1228,16 +1264,196 @@ class ChatAdminReplyView(View):
                 content=form.cleaned_data["content"],
                 is_from_dj=True,
                 is_read=True,
+                sender=request.user,
             )
-            conversation.save(update_fields=["updated_at"])
+            conversation.staff_last_seen = timezone.now()
+            conversation.save(update_fields=["updated_at", "staff_last_seen"])
             messages.success(request, "Reply sent.")
             return redirect("dashboard:chat_reply", pk=pk)
-        chat_messages = conversation.chat_messages.all()
+        chat_messages = conversation.chat_messages.order_by("-pk")[:50]
         return render(
             request,
             self.template_name,
-            {"conversation": conversation, "chat_messages": chat_messages, "form": form},
+            {
+                "conversation": conversation,
+                "chat_messages": reversed(list(chat_messages)),
+                "form": form,
+            },
         )
+
+
+@method_decorator(superuser_required, name="dispatch")
+class MessageModerationView(View):
+    def post(self, request, pk, message_pk):
+        conversation = get_object_or_404(Conversation, pk=pk)
+        message = get_object_or_404(
+            ChatMessage.objects.filter(conversation=conversation), pk=message_pk
+        )
+        reason = request.POST.get("reason", "").strip()
+        if request.POST.get("confirm") != "1" or not reason:
+            messages.error(request, "Confirm removal and provide a moderation reason.")
+            return redirect("portal:chat_reply", pk=conversation.pk)
+        if message.deleted_at:
+            messages.info(request, "That message has already been removed.")
+            return redirect("portal:chat_reply", pk=conversation.pk)
+        with transaction.atomic():
+            message.deleted_at = timezone.now()
+            message.deleted_by = request.user
+            message.deletion_kind = "moderation"
+            message.save(update_fields=["deleted_at", "deleted_by", "deletion_kind"])
+            MessageModerationAction.objects.create(
+                message=message,
+                moderator=request.user,
+                reason=reason[:500],
+            )
+        messages.success(request, "Message removed and moderation action recorded.")
+        return redirect("portal:chat_reply", pk=conversation.pk)
+
+
+@method_decorator(superuser_required, name="dispatch")
+class RegisteredUsersView(View):
+    template_name = "dashboard/registered_users.html"
+
+    def get(self, request):
+        user_model = get_user_model()
+        queryset = user_model.objects.filter(is_superuser=False, is_staff=False).select_related(
+            "account_profile"
+        )
+        search = request.GET.get("q", "").strip()[:100]
+        status = request.GET.get("status", "")
+        date_from = request.GET.get("from", "")
+        date_to = request.GET.get("to", "")
+        if search:
+            queryset = queryset.filter(
+                Q(username__istartswith=search)
+                | Q(first_name__istartswith=search)
+                | Q(last_name__istartswith=search)
+                | Q(account_profile__phone_number__istartswith=search)
+                | Q(account_profile__location__istartswith=search)
+            )
+        if status == "active":
+            queryset = queryset.filter(is_active=True)
+        elif status == "inactive":
+            queryset = queryset.filter(is_active=False)
+        parsed_from = parse_date(date_from) if date_from else None
+        parsed_to = parse_date(date_to) if date_to else None
+        filter_error = ""
+        if date_from and not parsed_from:
+            filter_error = "Choose a valid start date."
+        elif date_to and not parsed_to:
+            filter_error = "Choose a valid end date."
+        if parsed_from:
+            from_at = timezone.make_aware(
+                datetime.datetime.combine(parsed_from, datetime.time.min)
+            )
+            queryset = queryset.filter(
+                Q(account_profile__registered_at__gte=from_at)
+                | Q(account_profile__isnull=True, date_joined__gte=from_at)
+            )
+        if parsed_to:
+            until = timezone.make_aware(
+                datetime.datetime.combine(
+                    parsed_to + datetime.timedelta(days=1),
+                    datetime.time.min,
+                )
+            )
+            queryset = queryset.filter(
+                Q(account_profile__registered_at__lt=until)
+                | Q(account_profile__isnull=True, date_joined__lt=until)
+            )
+        page_obj = Paginator(
+            queryset.order_by("-account_profile__registered_at", "-pk"), 50
+        ).get_page(
+            request.GET.get("page")
+        )
+        return render(
+            request,
+            self.template_name,
+            {
+                "page_obj": page_obj,
+                "users": page_obj.object_list,
+                "user_count": queryset.count(),
+                "search_query": search,
+                "status_filter": status,
+                "date_from": date_from,
+                "date_to": date_to,
+                "filter_error": filter_error,
+            },
+        )
+
+
+@method_decorator(superuser_required, name="dispatch")
+class RegisteredUserDetailView(View):
+    template_name = "dashboard/registered_user_detail.html"
+
+    def get(self, request, pk):
+        user = get_object_or_404(
+            get_user_model().objects.filter(is_superuser=False, is_staff=False),
+            pk=pk,
+        )
+        profile = UserProfile.objects.filter(user=user).first()
+        AdminUserAudit.objects.create(
+            actor=request.user,
+            target=user,
+            action=AdminUserAudit.USER_VIEW,
+        )
+        return render(
+            request,
+            self.template_name,
+            {"managed_user": user, "profile": profile},
+        )
+
+
+@method_decorator(superuser_required, name="dispatch")
+class RegisteredUserConversationsView(View):
+    template_name = "dashboard/registered_user_conversations.html"
+
+    def get(self, request, pk):
+        user = get_object_or_404(
+            get_user_model().objects.filter(is_superuser=False, is_staff=False),
+            pk=pk,
+        )
+        AdminUserAudit.objects.create(
+            actor=request.user,
+            target=user,
+            action=AdminUserAudit.CONVERSATION_VIEW,
+        )
+        page_obj = Paginator(
+            Conversation.objects.filter(user=user).order_by("-updated_at", "-pk"),
+            20,
+        ).get_page(request.GET.get("page"))
+        return render(
+            request,
+            self.template_name,
+            {"managed_user": user, "page_obj": page_obj},
+        )
+
+
+@method_decorator(superuser_required, name="dispatch")
+class RegisteredUserStatusView(View):
+    def post(self, request, pk):
+        user = get_object_or_404(get_user_model(), pk=pk)
+        if user.pk == request.user.pk or user.is_staff or user.is_superuser:
+            messages.error(request, "Staff and administrator accounts cannot be managed here.")
+            return redirect("portal:registered_user_detail", pk=user.pk)
+        active = request.POST.get("active")
+        if request.POST.get("confirm") != "1" or active not in {"true", "false"}:
+            messages.error(request, "Confirm the requested account status change.")
+            return redirect("portal:registered_user_detail", pk=user.pk)
+        user.is_active = active == "true"
+        with transaction.atomic():
+            user.save(update_fields=["is_active"])
+            AdminUserAudit.objects.create(
+                actor=request.user,
+                target=user,
+                action=AdminUserAudit.STATUS_CHANGE,
+                detail="active" if user.is_active else "inactive",
+            )
+        messages.success(
+            request,
+            "Account activated." if user.is_active else "Account suspended. Related messages were retained.",
+        )
+        return redirect("portal:registered_user_detail", pk=user.pk)
 
 
 @method_decorator(superuser_required, name="dispatch")

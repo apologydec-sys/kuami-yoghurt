@@ -11,17 +11,27 @@
       <div class="chat-window__header">
         <div class="chat-window__header-info">
           <strong>DJ Kuami Yoghurt</strong>
-          <span class="chat-window__status" id="chatStatus">Online</span>
+          <span class="chat-window__status" id="chatStatus" aria-live="polite">Staff availability checking…</span>
         </div>
       </div>
 
       <!-- Message thread -->
       <div class="chat-window__messages" id="chatMessages" role="log" aria-live="polite" aria-label="Messages">
+        {% if has_older_messages %}
+        <button type="button" id="loadOlderMessages" class="btn btn-sm">Load older messages</button>
+        {% endif %}
         {% for message in messages %}
         <div class="chat-message {% if message.is_from_dj %}chat-message--dj{% else %}chat-message--customer{% endif %}" id="msg-{{ message.pk }}">
           <div class="chat-message__bubble">
-            <p class="chat-message__text">{{ message.content }}</p>
+            <p class="chat-message__text">{% if message.deleted_at %}This message was removed.{% else %}{{ message.content }}{% endif %}</p>
             <time class="chat-message__time" datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"g:i A" }}</time>
+            {% if message.sender_id == request.user.pk and not message.deleted_at %}
+            <form method="post" action="{% url 'chat:message_delete' pk=conversation.pk message_pk=message.pk %}" onsubmit="return confirm('Remove this message from the conversation?');">
+              {% csrf_token %}
+              <input type="hidden" name="confirm_delete" value="1">
+              <button class="chat-message__delete" type="submit">Delete message</button>
+            </form>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
@@ -63,10 +73,12 @@
   document.addEventListener('DOMContentLoaded', function() {
     var sendUrl = "{% url 'chat:send' pk=conversation.pk %}";
     var pollUrl = "{% url 'chat:poll' pk=conversation.pk %}";
+    var historyUrl = "{% url 'chat:history' pk=conversation.pk %}";
+    var deleteBaseUrl = "{% url 'chat:window' pk=conversation.pk %}messages/";
     var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
     if (window.startChatPolling) {
-      window.startChatPolling(sendUrl, pollUrl, csrfToken);
+      window.startChatPolling(sendUrl, pollUrl, historyUrl, deleteBaseUrl, csrfToken);
     }
   });
 </script>

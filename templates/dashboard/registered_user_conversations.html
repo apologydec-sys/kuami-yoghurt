@@ -1,0 +1,23 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Conversations — {{ managed_user.username }}{% endblock %}
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Conversations for {{ managed_user.username }}</h1>
+<p>Access to this private history is recorded in the administrator audit log.</p>
+<ul class="content-list">
+  {% for conversation in page_obj %}
+  <li class="content-list__item">
+    <span>Conversation {{ conversation.pk }} · Updated {{ conversation.updated_at|date:"M j, Y g:i A" }}</span>
+    <a class="btn btn-sm" href="{% url 'portal:chat_reply' pk=conversation.pk %}">Open conversation</a>
+  </li>
+  {% empty %}
+  <li>No account-linked conversations are available. Older guest conversations remain unassigned.</li>
+  {% endfor %}
+</ul>
+<nav class="content-pagination" aria-label="Conversation pages">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</nav>
+<a href="{% url 'portal:registered_user_detail' pk=managed_user.pk %}">Back to user details</a>
+{% endblock %}

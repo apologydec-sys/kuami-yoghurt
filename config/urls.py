@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
+from apps.accounts.views import AccountLoginView
 from apps.core import views as core_views
 from apps.core.views import handler404 as _handler404
 from apps.core.views import handler500 as _handler500
@@ -34,16 +35,13 @@ urlpatterns = [
     path("portal/", include("apps.dashboard.urls", namespace="portal")),
     path("dashboard/", include("apps.dashboard.urls", namespace="dashboard")),
     # Authentication
-    path(
-        "accounts/login/",
-        auth_views.LoginView.as_view(template_name="registration/login.html"),
-        name="login",
-    ),
+    path("accounts/login/", AccountLoginView.as_view(), name="login"),
     path(
         "accounts/logout/",
         auth_views.LogoutView.as_view(next_page="/"),
         name="logout",
     ),
+    path("accounts/", include("apps.accounts.urls", namespace="accounts")),
 ]
 
 # Serve media files during local development.

@@ -1,0 +1,44 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Registered Users — Super Admin{% endblock %}
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Registered Users <small>({{ user_count }})</small></h1>
+<form method="get" class="content-filter" role="search">
+  <label class="sr-only" for="userSearch">Search users</label>
+  <input id="userSearch" name="q" value="{{ search_query }}" placeholder="Username, name, phone or location">
+  <label>Status
+    <select name="status">
+      <option value="">All accounts</option>
+      <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+      <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Suspended</option>
+    </select>
+  </label>
+  <label>Joined from <input type="date" name="from" value="{{ date_from }}"></label>
+  <label>Joined to <input type="date" name="to" value="{{ date_to }}"></label>
+  <button class="btn btn-primary" type="submit">Filter</button>
+</form>
+{% if filter_error %}<p class="form__help form__help--error" role="alert">{{ filter_error }}</p>{% endif %}
+<div class="table-responsive">
+  <table class="admin-table">
+    <thead><tr><th>Name</th><th>Username</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for managed_user in users %}
+      <tr>
+        <td>{{ managed_user.get_full_name|default:"—" }}</td>
+        <td>{{ managed_user.username }}</td>
+        <td>{{ managed_user.date_joined|date:"M j, Y" }}</td>
+        <td>{% if managed_user.is_active %}Active{% else %}Suspended{% endif %}</td>
+        <td><a class="btn btn-sm" href="{% url 'portal:registered_user_detail' pk=managed_user.pk %}">View details</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No registered users match those filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<nav class="content-pagination" aria-label="User pages">
+  {% if page_obj.has_previous %}<a href="?q={{ search_query|urlencode }}&status={{ status_filter }}&from={{ date_from }}&to={{ date_to }}&page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?q={{ search_query|urlencode }}&status={{ status_filter }}&from={{ date_from }}&to={{ date_to }}&page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</nav>
+{% endblock %}

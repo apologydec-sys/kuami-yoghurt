@@ -7,16 +7,25 @@
   <a href="{% url 'dashboard:chat' %}" class="btn btn-outline btn-sm">← Conversations</a>
   <h1 class="dashboard-page-title" style="margin:0">{{ conversation.customer_name }}</h1>
   <span class="text-muted" style="font-size:0.85rem">{{ conversation.customer_email }}</span>
+  <span id="customerChatStatus" aria-live="polite">{% if conversation.customer_online %}Customer online{% else %}Customer offline{% endif %}</span>
 </div>
 
 <!-- Message thread -->
 <div class="chat-window" style="max-height:500px">
   <div class="chat-window__messages" style="max-height:400px;overflow-y:auto" id="adminChatMessages">
     {% for message in chat_messages %}
-    <div class="chat-message {% if message.is_from_dj %}chat-message--dj{% else %}chat-message--customer{% endif %}">
+    <div class="chat-message {% if message.is_from_dj %}chat-message--dj{% else %}chat-message--customer{% endif %}" id="msg-{{ message.pk }}">
       <div class="chat-message__bubble">
-        <p class="chat-message__text">{{ message.content }}</p>
+        <p class="chat-message__text">{% if message.deleted_at %}This message was removed.{% else %}{{ message.content }}{% endif %}</p>
         <time class="chat-message__time" datetime="{{ message.created_at|date:'c' }}">{{ message.created_at|date:"M j, g:i A" }}</time>
+        {% if request.user.is_superuser and not message.deleted_at %}
+        <form method="post" action="{% url 'portal:chat_message_moderate' pk=conversation.pk message_pk=message.pk %}" onsubmit="return confirm('Remove this message for all participants?');">
+          {% csrf_token %}
+          <input type="hidden" name="confirm" value="1">
+          <label>Moderation reason <input name="reason" maxlength="500" required></label>
+          <button type="submit" class="btn btn-sm btn-danger">Remove message</button>
+        </form>
+        {% endif %}
       </div>
     </div>
     {% empty %}
@@ -24,6 +33,9 @@
     {% endfor %}
   </div>
 </div>
+{% if request.user.is_superuser and conversation.user_id %}
+<p><a href="{% url 'portal:registered_user_detail' pk=conversation.user_id %}">Account owner details</a></p>
+{% endif %}
 
 <!-- Reply form -->
 <div class="detail-card" style="margin-top:1rem">
@@ -45,5 +57,58 @@
   // Auto-scroll to bottom of messages.
   var msgs = document.getElementById('adminChatMessages');
   if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  (function () {
+    var container = document.getElementById('adminChatMessages');
+    var status = document.getElementById('customerChatStatus');
+    if (!container) return;
+    var entries = container.querySelectorAll('.chat-message');
+    var cursor = entries.length ? parseInt(entries[entries.length - 1].id.replace('msg-', ''), 10) || 0 : 0;
+    var pollUrl = "{% url 'chat:poll' pk=conversation.pk %}";
+    function poll() {
+      fetch(pollUrl + '?after=' + encodeURIComponent(cursor))
+        .then(function (response) {
+          if (!response.ok) throw new Error('Chat polling failed');
+          return response.json();
+        })
+        .then(function (data) {
+          data.messages.forEach(function (message) {
+            if (document.getElementById('msg-' + message.id)) return;
+            var row = document.createElement('div');
+            row.id = 'msg-' + message.id;
+            row.className = 'chat-message ' + (message.is_from_dj ? 'chat-message--dj' : 'chat-message--customer');
+            var bubble = document.createElement('div');
+            bubble.className = 'chat-message__bubble';
+            var text = document.createElement('p');
+            text.className = 'chat-message__text';
+            text.textContent = message.is_deleted ? 'This message was removed.' : message.content;
+            var time = document.createElement('time');
+            time.className = 'chat-message__time';
+            time.dateTime = message.timestamp;
+            time.textContent = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            bubble.appendChild(text);
+            bubble.appendChild(time);
+            row.appendChild(bubble);
+            container.appendChild(row);
+            cursor = Math.max(cursor, message.id);
+          });
+          data.deleted_updates.forEach(function (message) {
+            var row = document.getElementById('msg-' + message.id);
+            var text = row && row.querySelector('.chat-message__text');
+            if (text) text.textContent = 'This message was removed.';
+            var form = row && row.querySelector('form');
+            if (form) form.remove();
+          });
+          if (status && typeof data.customer_online === 'boolean') {
+            status.textContent = data.customer_online ? 'Customer online' : 'Customer offline';
+          }
+          container.scrollTop = container.scrollHeight;
+        })
+        .catch(function () {
+          if (status) status.textContent = 'Chat connection interrupted';
+        });
+    }
+    poll();
+    setInterval(poll, 3000);
+  })();
 </script>
 {% endblock %}

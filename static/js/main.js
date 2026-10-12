@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 /* ---- Chat Polling ---------------------------------------- */
-function startChatPolling(sendUrl, pollUrl, csrfToken) {
+function startChatPolling(sendUrl, pollUrl, historyUrl, deleteBaseUrl, csrfToken) {
   var sendForm = document.getElementById('chatSendForm');
   var messagesContainer = document.getElementById('chatMessages');
   var chatInput = document.getElementById('chatInput');
@@ -310,20 +310,43 @@ function startChatPolling(sendUrl, pollUrl, csrfToken) {
 
   if (!sendForm || !messagesContainer) return;
 
-  var lastTimestamp = null;
+  var lastMessageId = 0;
+  var historyButton = document.getElementById('loadOlderMessages');
+  var chatStatus = document.getElementById('chatStatus');
 
-  // Find the timestamp of the last message already on the page.
   var existingMessages = messagesContainer.querySelectorAll('.chat-message');
   if (existingMessages.length > 0) {
-    var lastMsg = existingMessages[existingMessages.length - 1];
-    var lastTime = lastMsg.querySelector('time');
-    if (lastTime) {
-      lastTimestamp = lastTime.getAttribute('datetime');
-    }
+    lastMessageId = parseInt(existingMessages[existingMessages.length - 1].id.replace('msg-', ''), 10) || 0;
   }
 
   function scrollToBottom() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function appendDeleteControl(bubble, msg) {
+    if (!msg.is_own || msg.is_deleted) return;
+    var form = document.createElement('form');
+    form.method = 'post';
+    form.action = deleteBaseUrl + msg.id + '/delete/';
+    form.addEventListener('submit', function (event) {
+      if (!window.confirm('Remove this message from the conversation?')) event.preventDefault();
+    });
+    var csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrfmiddlewaretoken';
+    csrf.value = csrfToken;
+    var confirmField = document.createElement('input');
+    confirmField.type = 'hidden';
+    confirmField.name = 'confirm_delete';
+    confirmField.value = '1';
+    var button = document.createElement('button');
+    button.type = 'submit';
+    button.className = 'chat-message__delete';
+    button.textContent = 'Delete message';
+    form.appendChild(csrf);
+    form.appendChild(confirmField);
+    form.appendChild(button);
+    bubble.appendChild(form);
   }
 
   function appendMessage(msg) {
@@ -334,27 +357,35 @@ function startChatPolling(sendUrl, pollUrl, csrfToken) {
     var ts = new Date(msg.timestamp);
     var timeStr = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    div.innerHTML =
-      '<div class="chat-message__bubble">' +
-      '<p class="chat-message__text">' + escapeHtml(msg.content) + '</p>' +
-      '<time class="chat-message__time" datetime="' + escapeHtml(msg.timestamp) + '">' + timeStr + '</time>' +
-      '</div>';
+    var bubble = document.createElement('div');
+    bubble.className = 'chat-message__bubble';
+    var text = document.createElement('p');
+    text.className = 'chat-message__text';
+    text.textContent = msg.is_deleted ? 'This message was removed.' : msg.content;
+    var time = document.createElement('time');
+    time.className = 'chat-message__time';
+    time.dateTime = msg.timestamp;
+    time.textContent = timeStr;
+    bubble.appendChild(text);
+    bubble.appendChild(time);
+    appendDeleteControl(bubble, msg);
+    div.appendChild(bubble);
 
     // Remove empty-state placeholder if present.
     var empty = messagesContainer.querySelector('.chat-window__empty');
     if (empty) empty.remove();
 
     messagesContainer.appendChild(div);
-    lastTimestamp = msg.timestamp;
+    lastMessageId = Math.max(lastMessageId, msg.id);
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  function updateDeletedMessage(msg) {
+    var message = document.getElementById('msg-' + msg.id);
+    if (!message) return;
+    var text = message.querySelector('.chat-message__text');
+    if (text) text.textContent = 'This message was removed.';
+    var deleteButton = message.querySelector('.chat-message__delete');
+    if (deleteButton) deleteButton.remove();
   }
 
   // Send message.
@@ -396,7 +427,7 @@ function startChatPolling(sendUrl, pollUrl, csrfToken) {
 
   // Poll for new messages.
   function poll() {
-    var url = pollUrl + (lastTimestamp ? '?since=' + encodeURIComponent(lastTimestamp) : '');
+    var url = pollUrl + '?after=' + encodeURIComponent(lastMessageId);
     fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (res) { return res.json(); })
       .then(function (data) {
@@ -409,8 +440,62 @@ function startChatPolling(sendUrl, pollUrl, csrfToken) {
           });
           scrollToBottom();
         }
+        if (data.deleted_updates) data.deleted_updates.forEach(updateDeletedMessage);
+        if (chatStatus && typeof data.agent_online === 'boolean') {
+          chatStatus.textContent = data.agent_online ? 'Staff online' : 'Staff offline';
+        }
       })
-      .catch(function () { /* silently ignore poll errors */ });
+      .catch(function () {
+        if (chatStatus) chatStatus.textContent = 'Connection interrupted';
+      });
+  }
+
+  if (historyButton) {
+    historyButton.addEventListener('click', function () {
+      var firstMessage = messagesContainer.querySelector('.chat-message');
+      var beforeId = firstMessage ? parseInt(firstMessage.id.replace('msg-', ''), 10) : 0;
+      if (!beforeId) return;
+      historyButton.disabled = true;
+      fetch(historyUrl + '?before=' + encodeURIComponent(beforeId))
+        .then(function (response) {
+          if (!response.ok) throw new Error('History request failed');
+          return response.json();
+        })
+        .then(function (data) {
+          var fragment = document.createDocumentFragment();
+          data.messages.forEach(function (msg) {
+            var div = document.createElement('div');
+            div.className = 'chat-message ' + (msg.is_from_dj ? 'chat-message--dj' : 'chat-message--customer');
+            div.id = 'msg-' + msg.id;
+            var bubble = document.createElement('div');
+            bubble.className = 'chat-message__bubble';
+            var text = document.createElement('p');
+            text.className = 'chat-message__text';
+            text.textContent = msg.is_deleted ? 'This message was removed.' : msg.content;
+            var time = document.createElement('time');
+            time.className = 'chat-message__time';
+            time.dateTime = msg.timestamp;
+            time.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            bubble.appendChild(text);
+            bubble.appendChild(time);
+            appendDeleteControl(bubble, msg);
+            div.appendChild(bubble);
+            fragment.appendChild(div);
+          });
+          var previousHeight = messagesContainer.scrollHeight;
+          messagesContainer.insertBefore(fragment, historyButton.nextSibling);
+          messagesContainer.scrollTop += messagesContainer.scrollHeight - previousHeight;
+          if (!data.has_more) historyButton.remove();
+          else historyButton.disabled = false;
+        })
+        .catch(function () {
+          historyButton.disabled = false;
+          if (sendError) {
+            sendError.textContent = 'Could not load older messages.';
+            sendError.removeAttribute('hidden');
+          }
+        });
+    });
   }
 
   // Start polling every 3 seconds.

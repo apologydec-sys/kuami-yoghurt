@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}My Chats — DJ Kuami Yoghurt{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container container--narrow">
+    <h1>My Chats</h1>
+    <p>Your conversations stay saved to your account when you log out.</p>
+    <p><a class="btn btn-primary" href="{% url 'chat:start' %}">Start a conversation</a></p>
+    {% if conversations %}
+      <ul class="chat-history-list">
+        {% for conversation in conversations %}
+          <li>
+            <a href="{% url 'chat:window' pk=conversation.pk %}">
+              <strong>Conversation {{ conversation.pk }}</strong>
+              <span>Updated {{ conversation.updated_at|date:"M j, Y g:i A" }}</span>
+              <span>{{ conversation.message_count }} message{{ conversation.message_count|pluralize }}</span>
+              <span>{{ conversation.latest_preview|default:"No visible messages yet."|truncatechars:120 }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+    {% else %}
+      <p>You have no conversations yet. Start one to message DJ Kuami Yoghurt.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

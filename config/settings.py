@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Custom apps
     "apps.core",
+    "apps.accounts",
     "apps.music",
     "apps.videos",
     "apps.gallery",
@@ -182,7 +183,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentication
 LOGIN_URL = "/portal/login/"
-LOGIN_REDIRECT_URL = "/portal/"
+LOGIN_REDIRECT_URL = "/accounts/chats/"
 LOGOUT_REDIRECT_URL = "/"
 
 # Session

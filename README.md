@@ -49,6 +49,14 @@ Safe deployment sequence:
 
 The Render build does not run migrations automatically, to avoid unreviewed schema changes during every deploy.
 
+Account/chat migrations add private user profiles, indexes, account ownership for new conversations, message tombstones, and moderation audit records. Existing account rows receive blank profile records with their original registration timestamps; existing guest conversations and messages remain unassigned and unchanged. Review the profile backfill duration against the production user-table size before applying the migration.
+
+## Accounts and chat privacy
+
+Registration uses Django's built-in user model and password hashing. Phone numbers and locations are visible only to the account owner and authorized Superadmins. New chats require login and are account-bound; older guest-session conversations are not automatically attributed to users. Message deletion is a soft deletion: participants see a removal notice while the original content remains in the database for moderation. No automatic message-purge policy is configured. Superadmin moderation requires a reason and records an audit action. Account management supports activation and suspension; account deletion, anonymization, and exports are intentionally not available, so related conversations are retained. Account deletion is also disabled in Django Admin to prevent bypassing this retention policy.
+
+The chat uses authenticated, database-backed polling under the current WSGI/Gunicorn deployment. Conversation lists and user lists are paginated, message history is fetched in bounded pages, and registration/message creation are rate-limited. These controls do not guarantee capacity for millions of users; actual capacity depends on the PostgreSQL plan, storage, indexes, traffic, and future infrastructure work.
+
 ## Cloudinary media
 
 Set either `CLOUDINARY_URL` or all three of `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in local/private hosting environment configuration. The application reports missing Cloudinary settings without printing their values. Artwork and images use the configured Cloudinary storage. Music `CloudinaryField`s currently specify `resource_type="raw"`; video uploads use `resource_type="video"`. These existing types are intentionally preserved for compatibility with stored media. Account upload-size and delivery restrictions depend on the Cloudinary plan.

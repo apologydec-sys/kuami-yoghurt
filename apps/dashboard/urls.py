@@ -53,5 +53,22 @@ urlpatterns = [
     path("biographies/<int:pk>/delete/", views.BiographyDeleteView.as_view(), name="biography_delete"),
     path("chat/", views.ChatAdminListView.as_view(), name="chat"),
     path("chat/<int:pk>/", views.ChatAdminReplyView.as_view(), name="chat_reply"),
+    path(
+        "chat/<int:pk>/messages/<int:message_pk>/moderate/",
+        views.MessageModerationView.as_view(),
+        name="chat_message_moderate",
+    ),
+    path("registered-users/", views.RegisteredUsersView.as_view(), name="registered_users"),
+    path("registered-users/<int:pk>/", views.RegisteredUserDetailView.as_view(), name="registered_user_detail"),
+    path(
+        "registered-users/<int:pk>/conversations/",
+        views.RegisteredUserConversationsView.as_view(),
+        name="registered_user_conversations",
+    ),
+    path(
+        "registered-users/<int:pk>/status/",
+        views.RegisteredUserStatusView.as_view(),
+        name="registered_user_status",
+    ),
     path("site-settings/", views.SiteSettingsView.as_view(), name="site_settings"),
 ]

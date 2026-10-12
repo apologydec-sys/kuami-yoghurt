@@ -1,0 +1,29 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}User {{ managed_user.username }} — Super Admin{% endblock %}
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Registered User</h1>
+<dl class="content-detail-list">
+  <div class="content-detail-list__row"><dt>First name</dt><dd>{{ managed_user.first_name|default:"—" }}</dd></div>
+  <div class="content-detail-list__row"><dt>Last name</dt><dd>{{ managed_user.last_name|default:"—" }}</dd></div>
+  <div class="content-detail-list__row"><dt>Username</dt><dd>{{ managed_user.username }}</dd></div>
+  <div class="content-detail-list__row"><dt>Phone</dt><dd>{{ profile.phone_number|default:"—" }}</dd></div>
+  <div class="content-detail-list__row"><dt>Location</dt><dd>{{ profile.location|default:"—" }}</dd></div>
+  <div class="content-detail-list__row"><dt>Date joined</dt><dd>{{ managed_user.date_joined|date:"M j, Y g:i A" }}</dd></div>
+  <div class="content-detail-list__row"><dt>Last login</dt><dd>{{ managed_user.last_login|date:"M j, Y g:i A"|default:"Never" }}</dd></div>
+  <div class="content-detail-list__row"><dt>Account status</dt><dd>{% if managed_user.is_active %}Active{% else %}Suspended{% endif %}</dd></div>
+</dl>
+<p><a class="btn" href="{% url 'portal:registered_user_conversations' pk=managed_user.pk %}">View conversations</a></p>
+<form method="post" action="{% url 'portal:registered_user_status' pk=managed_user.pk %}" onsubmit="return confirm('Change this account status?');">
+  {% csrf_token %}
+  <input type="hidden" name="confirm" value="1">
+  {% if managed_user.is_active %}
+    <input type="hidden" name="active" value="false">
+    <button class="btn btn-danger" type="submit">Suspend account</button>
+  {% else %}
+    <input type="hidden" name="active" value="true">
+    <button class="btn btn-primary" type="submit">Activate account</button>
+  {% endif %}
+</form>
+<p><a href="{% url 'portal:registered_users' %}">Back to registered users</a></p>
+{% endblock %}

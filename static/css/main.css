@@ -133,6 +133,7 @@ p { color: var(--text-muted); }
   border-radius: var(--radius);
 }
 .nav__link--cta:hover { background: var(--accent-dark); }
+.nav__link--account-button { border: 0; background: transparent; cursor: pointer; font: inherit; }
 
 .nav__toggle {
   display: none;

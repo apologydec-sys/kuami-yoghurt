@@ -22,25 +22,6 @@
         </div>
         {% endif %}
 
-        <div class="form__row form__row--2col">
-          <div class="form__group {% if form.customer_name.errors %}form__group--error{% endif %}">
-            <label class="form__label" for="{{ form.customer_name.id_for_label }}">{{ form.customer_name.label }} <span aria-hidden="true">*</span></label>
-            {{ form.customer_name }}
-            {% if form.customer_name.errors %}<p class="form__help form__help--error" role="alert">{{ form.customer_name.errors.0 }}</p>{% endif %}
-          </div>
-          <div class="form__group {% if form.customer_email.errors %}form__group--error{% endif %}">
-            <label class="form__label" for="{{ form.customer_email.id_for_label }}">{{ form.customer_email.label }} <span aria-hidden="true">*</span></label>
-            {{ form.customer_email }}
-            {% if form.customer_email.errors %}<p class="form__help form__help--error" role="alert">{{ form.customer_email.errors.0 }}</p>{% endif %}
-          </div>
-        </div>
-
-        <div class="form__group {% if form.customer_phone.errors %}form__group--error{% endif %}">
-          <label class="form__label" for="{{ form.customer_phone.id_for_label }}">{{ form.customer_phone.label }}</label>
-          {{ form.customer_phone }}
-          {% if form.customer_phone.errors %}<p class="form__help form__help--error" role="alert">{{ form.customer_phone.errors.0 }}</p>{% endif %}
-        </div>
-
         <div class="form__group {% if form.initial_message.errors %}form__group--error{% endif %}">
           <label class="form__label" for="{{ form.initial_message.id_for_label }}">{{ form.initial_message.label }} <span aria-hidden="true">*</span></label>
           {{ form.initial_message }}

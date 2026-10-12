@@ -13,6 +13,7 @@
         <th>Customer</th>
         <th>Email</th>
         <th>Unread</th>
+        <th>Customer status</th>
         <th>Last Activity</th>
         <th></th>
       </tr>
@@ -29,6 +30,7 @@
           <span class="badge badge--muted">0</span>
           {% endif %}
         </td>
+        <td>{% if conv.customer_online %}Online{% else %}Offline{% endif %}</td>
         <td>{{ conv.updated_at|date:"M j, Y, g:i A" }}</td>
         <td><a href="{% url 'dashboard:chat_reply' pk=conv.pk %}" class="btn btn-outline btn-sm">Reply</a></td>
       </tr>
@@ -41,4 +43,7 @@
   <p class="empty-state__text">No conversations yet.</p>
 </div>
 {% endif %}
+{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
 {% endblock %}
