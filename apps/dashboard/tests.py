@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
 from apps.bookings.models import Booking, BookingStatusHistory
+from apps.chat.models import Conversation, Message
 
 User = get_user_model()
 
@@ -35,6 +36,22 @@ class DashboardAccessTest(TestCase):
         self.client.force_login(self.superuser)
         response = self.client.get("/portal/bookings/")
         self.assertEqual(response.status_code, 200)
+
+    def test_chat_list_renders_existing_conversation(self):
+        self.client.force_login(self.superuser)
+        conversation = Conversation.objects.create(
+            session_key="portal-chat-list-test",
+            customer_name="Existing customer",
+        )
+        Message.objects.create(
+            conversation=conversation,
+            content="Existing message",
+            is_from_dj=False,
+        )
+        response = self.client.get("/portal/chat/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Existing customer")
+        self.assertEqual(response.context["conversations"][0].unread_message_count, 1)
 
     def test_portal_login_page_renders(self):
         response = self.client.get("/portal/login/")

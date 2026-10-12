@@ -1219,7 +1219,7 @@ class ChatAdminListView(View):
 
     def get(self, request):
         queryset = Conversation.objects.annotate(
-            unread_count=Count(
+            unread_message_count=Count(
                 "chat_messages",
                 filter=Q(
                     chat_messages__is_from_dj=False,
