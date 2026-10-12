@@ -8,6 +8,7 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import get_user_model
+from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError, transaction
@@ -63,6 +64,22 @@ def superuser_required(view_func):
         lambda user: user.is_authenticated and user.is_staff and user.is_superuser,
         login_url="/portal/login/",
     )(view_func)
+
+
+class PortalLoginView(LoginView):
+    template_name = "dashboard/portal_login.html"
+    redirect_authenticated_user = False
+    next_page = "/portal/"
+
+    def dispatch(self, request, *args, **kwargs):
+        if (
+            request.method == "GET"
+            and request.user.is_authenticated
+            and request.user.is_staff
+            and request.user.is_superuser
+        ):
+            return redirect("portal:home")
+        return super().dispatch(request, *args, **kwargs)
 
 
 def _media_name(value):

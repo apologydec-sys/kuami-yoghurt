@@ -8,6 +8,7 @@ from apps.accounts.views import AccountLoginView
 from apps.core import views as core_views
 from apps.core.views import handler404 as _handler404
 from apps.core.views import handler500 as _handler500
+from apps.dashboard.views import PortalLoginView
 
 handler404 = _handler404
 handler500 = _handler500
@@ -22,14 +23,14 @@ urlpatterns = [
     path("", include("apps.chat.urls", namespace="chat")),
     path(
         "portal/login/",
-        auth_views.LoginView.as_view(
-            template_name="dashboard/portal_login.html",
-            redirect_authenticated_user=True,
-            next_page="/portal/",
-        ),
+        PortalLoginView.as_view(),
         name="portal_login",
     ),
-    path("portal/logout/", auth_views.LogoutView.as_view(next_page="/"), name="portal_logout"),
+    path(
+        "portal/logout/",
+        auth_views.LogoutView.as_view(next_page="/"),
+        name="portal_logout",
+    ),
     path("manifest.webmanifest", core_views.pwa_manifest, name="pwa_manifest"),
     path("service-worker.js", core_views.service_worker, name="service_worker"),
     path("portal/", include("apps.dashboard.urls", namespace="portal")),

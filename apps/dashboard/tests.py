@@ -42,6 +42,53 @@ class DashboardAccessTest(TestCase):
         self.assertContains(response, "Super Admin")
         self.assertContains(response, 'class="portal-shell"')
 
+    def test_anonymous_portal_login_and_missing_trailing_slash(self):
+        response = self.client.get("/portal/login/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Super Admin")
+        self.assertEqual(response.redirect_chain, [])
+
+        response = self.client.get("/portal/login", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [("/portal/login/", 301)])
+        self.assertContains(response, "Super Admin")
+
+    def test_authenticated_superuser_portal_login_redirects_to_dashboard(self):
+        self.client.force_login(self.superuser)
+        response = self.client.get("/portal/login/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [("/portal/", 302)])
+        self.assertEqual(response.request["PATH_INFO"], "/portal/")
+        self.assertContains(response, 'class="portal-shell"')
+
+        response = self.client.get("/portal/login", follow=True)
+        self.assertEqual(
+            response.redirect_chain,
+            [("/portal/login/", 301), ("/portal/", 302)],
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_authenticated_non_admin_does_not_loop_on_portal_login(self):
+        customer = User.objects.create_user(
+            username="portal-customer",
+            password="NotTheAdminPassword!123",
+            is_staff=False,
+            is_superuser=False,
+        )
+        self.client.force_login(customer)
+        response = self.client.get("/portal/login/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain, [])
+        self.assertContains(response, "Super Admin")
+
+        response = self.client.get("/portal/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.redirect_chain,
+            [("/portal/login/?next=/portal/", 302)],
+        )
+        self.assertContains(response, "Super Admin")
+
     def test_non_staff_user_cannot_access_portal(self):
         user = User.objects.create_user(username="customer", password="pass123", is_staff=False)
         self.client.force_login(user)
