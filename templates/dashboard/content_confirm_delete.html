@@ -1,0 +1,20 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Delete {{ object }} — Super Admin{% endblock %}
+
+{% block dashboard_content %}
+<div style="max-width:680px">
+  <h1 class="dashboard-page-title">Delete content</h1>
+  <section class="form-card" aria-labelledby="delete-confirmation-title">
+    <h2 id="delete-confirmation-title">{{ object }}</h2>
+    <p>This action permanently deletes this record and cannot be undone.</p>
+    {% if related_warning %}<p class="form__help">{{ related_warning }}</p>{% endif %}
+    <form method="post" class="content-actions">
+      {% csrf_token %}
+      <input type="hidden" name="confirm_delete" value="1" />
+      <button type="submit" class="btn btn-danger">Confirm delete</button>
+      <a href="{{ list_url }}" class="btn btn-outline">Cancel</a>
+    </form>
+  </section>
+</div>
+{% endblock %}

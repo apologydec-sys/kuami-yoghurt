@@ -13,9 +13,37 @@
 .sidebar-nav__link { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1.25rem; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: all 0.2s; }
 .sidebar-nav__link:hover, .sidebar-nav__link--active { color: var(--text-primary); background: rgba(201,168,76,0.08); border-left: 2px solid var(--accent); }
 .dashboard-page-title { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem; }
+.content-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+.content-actions form { margin: 0; }
+.content-filter { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0 0 1.25rem; }
+.content-filter input, .content-filter select { flex: 1 1 180px; min-width: 0; }
+.content-pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .75rem; margin: 1.25rem 0; color: var(--text-muted); }
+.content-detail-list { margin: 0; }
+.content-detail-list__row { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid var(--border); }
+.content-detail-list__row dt { color: var(--text-muted); }
+.content-detail-list__row dd { margin: 0; overflow-wrap: anywhere; }
+.content-list { list-style: none; display: grid; gap: .6rem; margin: 0; padding: 0; }
+.content-list__item { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; padding: .75rem; background: var(--bg-secondary); border-radius: var(--radius); }
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-sidebar { width: 210px; }
+  .dashboard-main { padding: 1.25rem; }
+}
 @media (max-width: 768px) {
   .dashboard-layout { flex-direction: column; }
-  .dashboard-sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); }
+  .dashboard-sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border); padding: .75rem 0; }
+  .sidebar-nav { display: flex; gap: .75rem; overflow-x: auto; padding: 0 .75rem .25rem; overscroll-behavior-x: contain; }
+  .sidebar-nav__group { flex: 0 0 auto; min-width: 140px; margin: 0; }
+  .sidebar-nav__label { padding: 0 .5rem; }
+  .sidebar-nav__link { white-space: nowrap; padding: .55rem .65rem; }
+  .dashboard-main { padding: 1rem; }
+  .content-detail-list__row { grid-template-columns: 1fr; gap: .25rem; }
+}
+@media (max-width: 480px) {
+  .dashboard-main { padding: .75rem; }
+  .upload-form__header { align-items: flex-start; flex-wrap: wrap; }
+  .upload-form__card { padding: 1rem; }
+  .upload-form__actions .btn { flex: 1 1 140px; text-align: center; }
+  .upload-form__advanced-fields { min-width: 0; }
 }
 </style>
 {% endblock %}
@@ -47,6 +75,12 @@
         <p class="sidebar-nav__label">Content</p>
         <a href="{% url 'dashboard:music' %}" class="sidebar-nav__link {% if 'music' in request.resolver_match.url_name or 'mix' in request.resolver_match.url_name or 'track' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
           🎵 Music
+        </a>
+        <a href="{% url 'portal:categories' %}" class="sidebar-nav__link {% if 'categor' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          🏷 Categories
+        </a>
+        <a href="{% url 'portal:biographies' %}" class="sidebar-nav__link {% if 'biograph' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
+          ✍️ Biography
         </a>
         <a href="{% url 'dashboard:videos' %}" class="sidebar-nav__link {% if 'video' in request.resolver_match.url_name %}sidebar-nav__link--active{% endif %}">
           🎬 Videos

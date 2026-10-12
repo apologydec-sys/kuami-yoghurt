@@ -55,6 +55,12 @@ Set either `CLOUDINARY_URL` or all three of `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY
 
 Manual MP3 verification: upload a small licensed MP3 through the portal, confirm it saves and produces a Cloudinary URL, open that URL in a private browser session, inspect the response status/content type, then play and seek it on the public track or mix page. This has not been verified against a live Cloudinary account unless performed separately with real credentials and a real file.
 
+## Installable PWA
+
+The public site includes a root-scoped web manifest and service worker. Install it from a supported browser's **Install app** prompt; on iPhone or iPad, open the HTTPS site in Safari, tap **Share**, then **Add to Home Screen**. The offline page and public site shell are cached for network outages. Authenticated portal/admin, account, booking, and chat pages are deliberately excluded from caches. Cloudinary audio, video, and image files are remote and are not downloaded for offline playback.
+
+The Render build must keep the `collectstatic --noinput --upload-unhashed-files` option: `django-cloudinary-storage` overrides static collection and otherwise skips unhashed files such as the PWA worker, offline page, and icons.
+
 ## GitHub and Render
 
 1. Review `git status` and ensure no `.env`, database, media uploads, or credentials are staged.

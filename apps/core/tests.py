@@ -1,7 +1,10 @@
 import datetime
+import json
 
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 
 from .models import Biography, ContactMessage, SiteSettings
 
@@ -58,6 +61,72 @@ class AboutViewTest(TestCase):
     def test_about_returns_200(self):
         response = self.client.get(reverse("core:about"))
         self.assertEqual(response.status_code, 200)
+
+
+class PwaExperienceTests(TestCase):
+    def test_manifest_has_root_scope_and_install_icons(self):
+        response = self.client.get(reverse("pwa_manifest"))
+        manifest = json.loads(response.content)
+
+        self.assertEqual(response["Content-Type"].split(";")[0], "application/manifest+json")
+        self.assertEqual(manifest["start_url"], "/")
+        self.assertEqual(manifest["scope"], "/")
+        self.assertEqual(manifest["display"], "standalone")
+        self.assertEqual(
+            {icon["sizes"] for icon in manifest["icons"]},
+            {"192x192", "512x512"},
+        )
+        for icon in manifest["icons"]:
+            icon_path = settings.BASE_DIR / "static" / icon["src"].removeprefix("/static/")
+            with Image.open(icon_path) as image:
+                self.assertEqual(image.size, tuple(map(int, icon["sizes"].split("x"))))
+
+    def test_service_worker_is_root_scoped_and_supplied_without_long_cache(self):
+        response = self.client.get(reverse("service_worker"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Service-Worker-Allowed"], "/")
+        self.assertEqual(response["Cache-Control"], "no-cache")
+        self.assertContains(response, "isPrivatePath")
+        self.assertContains(response, "OFFLINE_URL")
+        self.assertContains(response, "request.method !== 'GET'")
+        self.assertEqual(
+            self.client.post(reverse("service_worker")).status_code,
+            405,
+        )
+        offline_page = (settings.BASE_DIR / "static" / "offline.html").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("You're offline", offline_page)
+
+    def test_public_shell_offers_install_and_ios_instructions(self):
+        response = self.client.get(reverse("core:home"))
+        install_script = (
+            settings.BASE_DIR / "static" / "js" / "pwa.js"
+        ).read_text(encoding="utf-8")
+
+        self.assertContains(response, 'rel="manifest"')
+        self.assertContains(response, 'id="pwaInstallButton"')
+        self.assertContains(response, "js/pwa.js")
+        self.assertIn("Add to Home Screen", install_script)
+        self.assertIn("service-worker.js", install_script)
+
+    def test_music_detail_does_not_register_player_twice(self):
+        from apps.music.models import Mix
+
+        mix = Mix.objects.create(
+            title="Playback initialization test",
+            slug="playback-init-test",
+            is_published=True,
+        )
+        response = self.client.get(reverse("music:mix_detail", kwargs={"slug": mix.slug}))
+        main_script = (settings.BASE_DIR / "static" / "js" / "main.js").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "window.initAudioPlayer")
+        self.assertIn("playerInitialized", main_script)
 
 
 class ContactViewTest(TestCase):

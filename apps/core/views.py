@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_GET
 from django.views.generic import TemplateView, FormView
 
 from apps.gallery.models import GalleryImage
@@ -7,6 +9,28 @@ from apps.music.models import Mix, Track
 from apps.videos.models import Video
 from .forms import ContactForm
 from .models import Biography, ContactMessage, SiteSettings
+
+
+@require_GET
+def pwa_manifest(request):
+    manifest = (settings.BASE_DIR / "static" / "site.webmanifest").read_text(
+        encoding="utf-8"
+    )
+    response = HttpResponse(manifest, content_type="application/manifest+json")
+    response["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@require_GET
+def service_worker(request):
+    worker_path = settings.BASE_DIR / "static" / "service-worker.js"
+    response = HttpResponse(
+        worker_path.read_text(encoding="utf-8"),
+        content_type="application/javascript; charset=utf-8",
+    )
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
+    return response
 
 
 class HomeView(TemplateView):

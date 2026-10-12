@@ -1,0 +1,34 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Content Categories — Super Admin{% endblock %}
+
+{% block dashboard_content %}
+<h1 class="dashboard-page-title">Content categories</h1>
+<div class="dashboard-row">
+  {% for group in category_groups %}
+  <section class="dashboard-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem">
+      <h2 class="dashboard-section__title" style="margin:0">{{ group.title }} ({{ group.count }})</h2>
+      {% if request.user.is_superuser %}<a href="{{ group.add_url }}" class="btn btn-primary btn-sm">Add</a>{% endif %}
+    </div>
+    {% if group.items %}
+    <ul class="content-list">
+      {% for item in group.items %}
+      <li class="content-list__item">
+        <span>{{ item.object.name }}</span>
+        {% if request.user.is_superuser %}
+        <span class="content-actions">
+          <a href="{{ item.edit_url }}" class="btn btn-outline btn-sm">Edit</a>
+          <a href="{{ item.delete_url }}" class="btn btn-danger btn-sm">Delete</a>
+        </span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">No categories yet.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

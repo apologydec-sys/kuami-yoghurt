@@ -5,10 +5,10 @@ from django.utils.text import slugify
 from PIL import Image, UnidentifiedImageError
 
 from apps.bookings.models import BOOKING_STATUSES
-from apps.core.models import SiteSettings
-from apps.gallery.models import GalleryImage
-from apps.music.models import Mix, Track
-from apps.videos.models import Video
+from apps.core.models import Biography, SiteSettings
+from apps.gallery.models import GalleryCategory, GalleryImage
+from apps.music.models import Category, Mix, Track
+from apps.videos.models import Video, VideoCategory
 
 
 class QuotationForm(forms.Form):
@@ -76,14 +76,27 @@ class PublicationModelFormMixin:
                 ).get_default()
         if (
             self.is_bound
-            and "is_published" in self.fields
-            and "_portal_upload_form" not in self.data
+            and self.instance.pk
+            and not self.data.get("_advanced_settings")
         ):
-            if self.instance.pk:
-                default = self.instance.is_published
-            else:
-                default = self._meta.model._meta.get_field("is_published").get_default()
-            cleaned_data["is_published"] = default
+            for field_name in getattr(self, "advanced_field_names", ()):
+                if field_name in self.fields:
+                    cleaned_data[field_name] = getattr(self.instance, field_name)
+        elif (
+            self.is_bound
+            and "is_published" in self.fields
+            and not self.data.get("_advanced_settings")
+        ):
+            cleaned_data["is_published"] = self._meta.model._meta.get_field(
+                "is_published"
+            ).get_default()
+        elif (
+            self.is_bound
+            and "is_published" in self.fields
+            and self.data.get("_advanced_settings")
+            and "is_published" not in self.data
+        ):
+            cleaned_data["is_published"] = False
         model_field_names = {
             field.name for field in self._meta.model._meta.fields
         }
@@ -142,6 +155,36 @@ class GalleryImageForm(PublicationModelFormMixin, forms.ModelForm):
     @property
     def advanced_fields(self):
         return [self[name] for name in self.advanced_field_names]
+
+
+class UniqueCategorySlugFormMixin:
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get("name")
+        if name:
+            slug = slugify(name)
+            categories = self._meta.model._default_manager.filter(slug=slug)
+            if self.instance.pk:
+                categories = categories.exclude(pk=self.instance.pk)
+            if categories.exists():
+                self.add_error("name", "A category with this name already exists.")
+        return cleaned_data
+
+
+class GalleryCategoryForm(UniqueCategorySlugFormMixin, forms.ModelForm):
+    class Meta:
+        model = GalleryCategory
+        fields = ["name", "order"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["name"].help_text = "Category names are shown in the public gallery."
+
+
+class MusicCategoryForm(UniqueCategorySlugFormMixin, forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ["name", "description", "order"]
 
 
 class MixForm(PublicationModelFormMixin, forms.ModelForm):
@@ -262,7 +305,7 @@ class VideoForm(PublicationModelFormMixin, forms.ModelForm):
         self.fields["title"].help_text = "Give this video a short, clear title."
         self.fields["description"].help_text = "Optional. Describe the video."
         self.fields["video_file"].label = "Video file"
-        self.fields["video_file"].required = True
+        self.fields["video_file"].required = not self.instance.video_file
         self.fields["video_file"].help_text = "MP4, MOV, WebM, AVI, or MKV; up to 500 MB."
         self.fields["video_file"].validators.append(validate_video_upload)
         _configure_file_widget(
@@ -286,6 +329,31 @@ class VideoForm(PublicationModelFormMixin, forms.ModelForm):
     @property
     def advanced_fields(self):
         return [self[name] for name in self.advanced_field_names]
+
+
+class VideoCategoryForm(UniqueCategorySlugFormMixin, forms.ModelForm):
+    class Meta:
+        model = VideoCategory
+        fields = ["name", "order"]
+
+
+class BiographyForm(forms.ModelForm):
+    class Meta:
+        model = Biography
+        fields = ["title", "body", "profile_image", "is_published"]
+        widgets = {"body": forms.Textarea(attrs={"rows": 8})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["profile_image"].required = False
+        self.fields["profile_image"].validators.append(validate_image_upload)
+        self.fields["profile_image"].widget.attrs.update(
+            {
+                "accept": "image/jpeg,image/png,image/webp",
+                "data-upload-input": "",
+                "data-upload-preview": "",
+            }
+        )
 
 
 class SiteSettingsForm(forms.ModelForm):

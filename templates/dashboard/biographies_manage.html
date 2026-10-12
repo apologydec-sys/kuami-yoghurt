@@ -1,0 +1,52 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Biography — Super Admin{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem">
+  <h1 class="dashboard-page-title" style="margin:0">Biography ({{ biography_count }})</h1>
+  {% if request.user.is_superuser %}<a href="{% url 'portal:biography_add' %}" class="btn btn-primary">Add biography</a>{% endif %}
+</div>
+
+<form method="get" class="content-filter">
+  <label class="sr-only" for="biography-search">Search biographies</label>
+  <input id="biography-search" type="search" name="q" value="{{ search_query }}" placeholder="Search biographies" />
+  <label class="sr-only" for="biography-publication">Publication</label>
+  <select id="biography-publication" name="publication">
+    <option value="">All publication states</option>
+    <option value="published" {% if publication_filter == "published" %}selected{% endif %}>Published</option>
+    <option value="draft" {% if publication_filter == "draft" %}selected{% endif %}>Draft</option>
+  </select>
+  <button class="btn btn-outline" type="submit">Filter</button>
+</form>
+
+{% if biographies %}
+<div class="table-responsive">
+  <table class="data-table">
+    <thead><tr><th>Title</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for biography in biographies %}
+      <tr>
+        <td>{{ biography.title }}</td>
+        <td>{% if biography.is_published %}<span class="badge badge--success">Published</span>{% else %}<span class="badge badge--muted">Draft</span>{% endif %}</td>
+        <td>{{ biography.updated_at|date:"M j, Y" }}</td>
+        <td>
+          <span class="content-actions">
+            <a href="{% url 'portal:biography_detail' pk=biography.pk %}" class="btn btn-outline btn-sm">View</a>
+            {% if request.user.is_superuser %}
+            <a href="{% url 'portal:biography_edit' pk=biography.pk %}" class="btn btn-outline btn-sm">Edit</a>
+            <form method="post" action="{% url 'portal:biography_publish' pk=biography.pk %}">{% csrf_token %}<button class="btn btn-outline btn-sm" type="submit">{% if biography.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>
+            <a href="{% url 'portal:biography_delete' pk=biography.pk %}" class="btn btn-danger btn-sm">Delete</a>
+            {% endif %}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted">No biographies found.</p>
+{% endif %}
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj %}
+{% endblock %}

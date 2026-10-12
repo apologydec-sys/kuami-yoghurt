@@ -6,6 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="{% block meta_description %}DJ Kuami Yoghurt — Professional DJ for weddings, corporate events, parties and more.{% endblock %}" />
   <title>{% block title %}DJ Kuami Yoghurt{% endblock %}</title>
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="manifest" href="{% url 'pwa_manifest' %}" />
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/pwa-icon-192.png' %}" />
+  <link rel="apple-touch-icon" href="{% static 'images/pwa-icon-192.png' %}" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="DJ Kuami Yoghurt" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -95,6 +102,10 @@
       {% endif %}
 
       <p class="footer__copy">&copy; {% now "Y" %} DJ Kuami Yoghurt. All rights reserved.</p>
+      <div class="pwa-install">
+        <button type="button" class="btn btn-outline btn-sm" id="pwaInstallButton">Install app</button>
+        <p class="pwa-install__instructions" id="pwaInstallInstructions" role="status" aria-live="polite" hidden></p>
+      </div>
     </div>
   </footer>
 
@@ -108,6 +119,7 @@
   {% endif %}
 
   <script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/pwa.js' %}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

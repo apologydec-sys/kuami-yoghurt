@@ -4,9 +4,22 @@
 
 {% block dashboard_content %}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
-  <h1 class="dashboard-page-title" style="margin:0">Videos</h1>
-  <a href="{% url 'dashboard:video_add' %}" class="btn btn-primary">Add Video</a>
+  <h1 class="dashboard-page-title" style="margin:0">Videos ({{ video_count }})</h1>
+  <span class="content-actions">
+    <a href="{% url 'portal:categories' %}" class="btn btn-outline">Categories</a>
+    {% if request.user.is_superuser %}<a href="{% url 'portal:video_add' %}" class="btn btn-primary">Add Video</a>{% endif %}
+  </span>
 </div>
+
+<form method="get" class="content-filter">
+  <label class="sr-only" for="video-search">Search videos</label>
+  <input id="video-search" type="search" name="q" value="{{ search_query }}" placeholder="Search videos" />
+  <label class="sr-only" for="video-category">Category</label>
+  <select id="video-category" name="category"><option value="">All categories</option>{% for category in categories %}<option value="{{ category.pk }}" {% if category_filter == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>{% endfor %}</select>
+  <label class="sr-only" for="video-publication">Publication</label>
+  <select id="video-publication" name="publication"><option value="">All publication states</option><option value="published" {% if publication_filter == "published" %}selected{% endif %}>Published</option><option value="draft" {% if publication_filter == "draft" %}selected{% endif %}>Draft</option></select>
+  <button type="submit" class="btn btn-outline">Filter</button>
+</form>
 
 {% if videos %}
 <div class="table-responsive">
@@ -17,6 +30,7 @@
         <th>Category</th>
         <th>Status</th>
         <th>Date</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -30,6 +44,14 @@
           {% if video.is_featured %}<span class="badge badge--accent">Featured</span>{% endif %}
         </td>
         <td>{{ video.published_at|date:"M j, Y"|default:"—" }}</td>
+        <td><span class="content-actions">
+          <a href="{% url 'portal:video_detail' pk=video.pk %}" class="btn btn-outline btn-sm">View</a>
+          {% if request.user.is_superuser %}
+          <a href="{% url 'portal:video_edit' pk=video.pk %}" class="btn btn-outline btn-sm">Edit</a>
+          <form method="post" action="{% url 'portal:video_publish' pk=video.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">{% if video.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>
+          <a href="{% url 'portal:video_delete' pk=video.pk %}" class="btn btn-danger btn-sm">Delete</a>
+          {% endif %}
+        </span></td>
       </tr>
       {% endfor %}
     </tbody>
@@ -40,4 +62,5 @@
   <p class="empty-state__text">No videos yet. <a href="{% url 'dashboard:video_add' %}">Add one</a>.</p>
 </div>
 {% endif %}
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj %}
 {% endblock %}

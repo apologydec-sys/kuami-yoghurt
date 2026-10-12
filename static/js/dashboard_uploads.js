@@ -68,4 +68,14 @@
       showFile(file);
     });
   });
+
+  var advancedSettings = document.querySelector("[data-advanced-settings]");
+  var advancedSettingsToggle = document.querySelector("[data-advanced-settings-toggle]");
+  if (advancedSettings && advancedSettingsToggle) {
+    advancedSettingsToggle.addEventListener("toggle", function () {
+      if (advancedSettingsToggle.open) {
+        advancedSettings.value = "1";
+      }
+    });
+  }
 })();

@@ -4,6 +4,7 @@
 {% block title %}{{ page_title }} — Super Admin{% endblock %}
 
 {% block extra_css %}
+{{ block.super }}
 <style>
 .upload-form__header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
 .upload-form__card { max-width: 760px; }
@@ -42,6 +43,7 @@
   <form method="post" enctype="multipart/form-data" class="form">
     {% csrf_token %}
     <input type="hidden" name="_portal_upload_form" value="1" />
+    <input type="hidden" name="_advanced_settings" value="" data-advanced-settings />
     {% if form.non_field_errors %}
     <div class="upload-form__errors" role="alert">
       {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
@@ -67,7 +69,7 @@
     </div>
     {% endfor %}
 
-    <details class="upload-form__advanced">
+    <details class="upload-form__advanced" data-advanced-settings-toggle>
       <summary>Advanced settings (optional)</summary>
       <div class="upload-form__advanced-fields">
         {% for field in form.advanced_fields %}

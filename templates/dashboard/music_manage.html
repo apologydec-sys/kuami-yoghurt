@@ -3,14 +3,34 @@
 {% block title %}Music — Dashboard{% endblock %}
 
 {% block dashboard_content %}
-<h1 class="dashboard-page-title">Music</h1>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem">
+  <h1 class="dashboard-page-title">Music</h1>
+  <a href="{% url 'portal:categories' %}" class="btn btn-outline">Manage categories</a>
+</div>
+
+<form method="get" class="content-filter">
+  <label class="sr-only" for="music-search">Search music</label>
+  <input id="music-search" type="search" name="q" value="{{ search_query }}" placeholder="Search mixes and tracks" />
+  <label class="sr-only" for="music-category">Category</label>
+  <select id="music-category" name="category">
+    <option value="">All categories</option>
+    {% for category in categories %}<option value="{{ category.pk }}" {% if category_filter == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="music-publication">Publication</label>
+  <select id="music-publication" name="publication">
+    <option value="">All publication states</option>
+    <option value="published" {% if publication_filter == "published" %}selected{% endif %}>Published</option>
+    <option value="draft" {% if publication_filter == "draft" %}selected{% endif %}>Draft</option>
+  </select>
+  <button type="submit" class="btn btn-outline">Filter</button>
+</form>
 
 <div class="dashboard-row">
   <!-- Mixes -->
   <section class="dashboard-section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-      <h2 class="dashboard-section__title" style="margin:0">Mixes ({{ mixes.count }})</h2>
-      <a href="{% url 'dashboard:mix_add' %}" class="btn btn-primary btn-sm">Add Mix</a>
+      <h2 class="dashboard-section__title" style="margin:0">Mixes ({{ mix_count }})</h2>
+      {% if request.user.is_superuser %}<a href="{% url 'portal:mix_add' %}" class="btn btn-primary btn-sm">Add Mix</a>{% endif %}
     </div>
     {% if mixes %}
     <div class="table-responsive">
@@ -26,7 +46,14 @@
               {% else %}<span class="badge badge--muted">Draft</span>{% endif %}
               {% if mix.is_featured %}<span class="badge badge--accent">Featured</span>{% endif %}
             </td>
-            <td><a href="{% url 'dashboard:mix_edit' slug=mix.slug %}" class="btn btn-outline btn-sm">Edit</a></td>
+            <td><span class="content-actions">
+              <a href="{% url 'portal:mix_detail' slug=mix.slug %}" class="btn btn-outline btn-sm">View</a>
+              {% if request.user.is_superuser %}
+              <a href="{% url 'portal:mix_edit' slug=mix.slug %}" class="btn btn-outline btn-sm">Edit</a>
+              <form method="post" action="{% url 'portal:mix_publish' slug=mix.slug %}">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">{% if mix.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>
+              <a href="{% url 'portal:mix_delete' slug=mix.slug %}" class="btn btn-danger btn-sm">Delete</a>
+              {% endif %}
+            </span></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -35,18 +62,25 @@
     {% else %}
     <p class="text-muted">No mixes yet.</p>
     {% endif %}
+    {% if mix_page.paginator.num_pages > 1 %}
+    <nav class="content-pagination" aria-label="Mix pages">
+      {% if mix_page.has_previous %}<a class="btn btn-outline btn-sm" href="?q={{ search_query|urlencode }}&amp;category={{ category_filter }}&amp;publication={{ publication_filter }}&amp;mix_page={{ mix_page.previous_page_number }}&amp;track_page={{ track_page.number }}">Previous mixes</a>{% endif %}
+      <span>Page {{ mix_page.number }} of {{ mix_page.paginator.num_pages }}</span>
+      {% if mix_page.has_next %}<a class="btn btn-outline btn-sm" href="?q={{ search_query|urlencode }}&amp;category={{ category_filter }}&amp;publication={{ publication_filter }}&amp;mix_page={{ mix_page.next_page_number }}&amp;track_page={{ track_page.number }}">Next mixes</a>{% endif %}
+    </nav>
+    {% endif %}
   </section>
 
   <!-- Tracks -->
   <section class="dashboard-section">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
-      <h2 class="dashboard-section__title" style="margin:0">Tracks ({{ tracks.count }})</h2>
-      <a href="{% url 'dashboard:track_add' %}" class="btn btn-primary btn-sm">Add Track</a>
+      <h2 class="dashboard-section__title" style="margin:0">Tracks ({{ track_count }})</h2>
+      {% if request.user.is_superuser %}<a href="{% url 'portal:track_add' %}" class="btn btn-primary btn-sm">Add Track</a>{% endif %}
     </div>
     {% if tracks %}
     <div class="table-responsive">
       <table class="data-table">
-        <thead><tr><th>Title</th><th>Category</th><th>Status</th></tr></thead>
+        <thead><tr><th>Title</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
           {% for track in tracks %}
           <tr>
@@ -56,6 +90,14 @@
               {% if track.is_published %}<span class="badge badge--success">Published</span>
               {% else %}<span class="badge badge--muted">Draft</span>{% endif %}
             </td>
+            <td><span class="content-actions">
+              <a href="{% url 'portal:track_detail' pk=track.pk %}" class="btn btn-outline btn-sm">View</a>
+              {% if request.user.is_superuser %}
+              <a href="{% url 'portal:track_edit' pk=track.pk %}" class="btn btn-outline btn-sm">Edit</a>
+              <form method="post" action="{% url 'portal:track_publish' pk=track.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">{% if track.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>
+              <a href="{% url 'portal:track_delete' pk=track.pk %}" class="btn btn-danger btn-sm">Delete</a>
+              {% endif %}
+            </span></td>
           </tr>
           {% endfor %}
         </tbody>
@@ -63,6 +105,13 @@
     </div>
     {% else %}
     <p class="text-muted">No tracks yet.</p>
+    {% endif %}
+    {% if track_page.paginator.num_pages > 1 %}
+    <nav class="content-pagination" aria-label="Track pages">
+      {% if track_page.has_previous %}<a class="btn btn-outline btn-sm" href="?q={{ search_query|urlencode }}&amp;category={{ category_filter }}&amp;publication={{ publication_filter }}&amp;mix_page={{ mix_page.number }}&amp;track_page={{ track_page.previous_page_number }}">Previous tracks</a>{% endif %}
+      <span>Page {{ track_page.number }} of {{ track_page.paginator.num_pages }}</span>
+      {% if track_page.has_next %}<a class="btn btn-outline btn-sm" href="?q={{ search_query|urlencode }}&amp;category={{ category_filter }}&amp;publication={{ publication_filter }}&amp;mix_page={{ mix_page.number }}&amp;track_page={{ track_page.next_page_number }}">Next tracks</a>{% endif %}
+    </nav>
     {% endif %}
   </section>
 </div>

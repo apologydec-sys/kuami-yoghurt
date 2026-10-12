@@ -56,6 +56,8 @@ function initAudioPlayer() {
   var playerStatus = document.getElementById('playerStatus');
 
   if (!audio || !playBtn) return;
+  if (audio.dataset.playerInitialized === 'true') return;
+  audio.dataset.playerInitialized = 'true';
 
   var iconPlay = playBtn.querySelector('.icon-play');
   var iconPause = playBtn.querySelector('.icon-pause');
@@ -73,7 +75,7 @@ function initAudioPlayer() {
     playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   }
 
-  function setPlayerState(state) {
+  function setPlayerState(state, message) {
     if (player) {
       player.classList.toggle('is-playing', state === 'playing');
       player.classList.toggle('is-loading', state === 'loading');
@@ -81,19 +83,39 @@ function initAudioPlayer() {
       player.setAttribute('aria-busy', String(state === 'loading'));
     }
     if (playerStatus) {
-      playerStatus.textContent = {
+      playerStatus.textContent = message || ({
         ready: 'Ready to play',
         loading: 'Loading audio',
         playing: 'Playing',
         paused: 'Paused',
         error: 'Audio could not be loaded'
-      }[state] || 'Ready to play';
+      }[state] || 'Ready to play');
     }
+  }
+
+  function describeAudioError() {
+    if (!audio.error) return 'Audio could not be loaded. Check your connection and try again.';
+    return {
+      1: 'Audio playback was interrupted. Press Play to try again.',
+      2: 'Audio could not be downloaded. Check your connection and try again.',
+      3: 'This audio file could not be decoded.',
+      4: 'This audio file is unavailable or uses an unsupported format.'
+    }[audio.error.code] || 'Audio could not be loaded. Check your connection and try again.';
+  }
+
+  function reportPlaybackFailure(error) {
+    var message = error && error.name === 'NotAllowedError'
+      ? 'Your browser blocked playback. Press Play to try again.'
+      : describeAudioError();
+    setPlayerState('error', message);
   }
 
   playBtn.addEventListener('click', function () {
     if (audio.paused) {
-      audio.play().catch(function () { /* autoplay policy */ });
+      var playback = audio.play();
+      if (playback && typeof playback.catch === 'function') {
+        playback.catch(reportPlaybackFailure);
+      }
     } else {
       audio.pause();
     }
@@ -104,7 +126,9 @@ function initAudioPlayer() {
   audio.addEventListener('canplay', function () {
     setPlayerState(audio.paused ? 'ready' : 'playing');
   });
-  audio.addEventListener('error', function () { setPlayerState('error'); });
+  audio.addEventListener('error', function () {
+    setPlayerState('error', describeAudioError());
+  });
   audio.addEventListener('play', function () {
     setPlayingState(true);
     setPlayerState('playing');
@@ -158,7 +182,10 @@ function initAudioPlayer() {
     ) {
       e.preventDefault();
       if (audio.paused) {
-        audio.play().catch(function () {});
+        var playback = audio.play();
+        if (playback && typeof playback.catch === 'function') {
+          playback.catch(reportPlaybackFailure);
+        }
       } else {
         audio.pause();
       }

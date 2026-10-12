@@ -1,0 +1,35 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}{{ object }} — Content{% endblock %}
+
+{% block dashboard_content %}
+<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+  <a href="{{ list_url }}" class="btn btn-outline btn-sm">← Back to content</a>
+  <h1 class="dashboard-page-title" style="margin:0">{{ object }}</h1>
+</div>
+
+<section class="dashboard-section">
+  <dl class="content-detail-list">
+    {% for label, value in details %}
+    <div class="content-detail-list__row">
+      <dt>{{ label }}</dt>
+      <dd>{{ value|linebreaksbr }}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+  {% if request.user.is_superuser %}
+  <div class="content-actions">
+    <a href="{{ edit_url }}" class="btn btn-outline">Edit</a>
+    {% if publish_url %}
+    <form method="post" action="{{ publish_url }}">
+      {% csrf_token %}
+      <button class="btn btn-outline" type="submit">
+        {% if object.is_published %}Unpublish{% else %}Publish{% endif %}
+      </button>
+    </form>
+    {% endif %}
+    <a href="{{ delete_url }}" class="btn btn-danger">Delete</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

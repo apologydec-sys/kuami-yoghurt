@@ -4,31 +4,57 @@
 
 {% block dashboard_content %}
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
-  <h1 class="dashboard-page-title" style="margin:0">Gallery</h1>
-  <a href="{% url 'dashboard:gallery_upload' %}" class="btn btn-primary">Upload Image</a>
+  <h1 class="dashboard-page-title" style="margin:0">Gallery ({{ image_count }})</h1>
+  <span class="content-actions">
+    <a href="{% url 'portal:categories' %}" class="btn btn-outline">Categories</a>
+    {% if request.user.is_superuser %}<a href="{% url 'portal:gallery_upload' %}" class="btn btn-primary">Upload Image</a>{% endif %}
+  </span>
 </div>
+
+<form method="get" class="content-filter">
+  <label class="sr-only" for="gallery-search">Search gallery</label>
+  <input id="gallery-search" type="search" name="q" value="{{ search_query }}" placeholder="Search gallery" />
+  <label class="sr-only" for="gallery-publication">Publication</label>
+  <select id="gallery-publication" name="publication">
+    <option value="">All publication states</option>
+    <option value="published" {% if publication_filter == "published" %}selected{% endif %}>Published</option>
+    <option value="draft" {% if publication_filter == "draft" %}selected{% endif %}>Draft</option>
+  </select>
+  <button class="btn btn-outline" type="submit">Filter</button>
+</form>
 
 {% if images %}
 <div class="gallery-manage-grid">
   {% for img in images %}
   <div class="gallery-manage-item">
+    {% if cloudinary_configured %}
     <img src="{{ img.image.url }}" alt="{{ img.title }}" loading="lazy" />
+    {% else %}
+    <div class="gallery-manage-item__placeholder" role="img" aria-label="Image preview unavailable until Cloudinary is configured">Image preview unavailable</div>
+    {% endif %}
     <div class="gallery-manage-item__info">
       <p class="gallery-manage-item__title">{{ img.title }}</p>
       {% if img.category %}<span class="badge badge--muted">{{ img.category.name }}</span>{% endif %}
       {% if img.is_featured %}<span class="badge badge--accent">Featured</span>{% endif %}
       {% if not img.is_published %}<span class="badge badge--warning">Draft</span>{% endif %}
     </div>
-    <form method="post" action="{% url 'dashboard:gallery_delete' pk=img.pk %}" onsubmit="return confirm('Delete this image?')">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger btn-sm" aria-label="Delete {{ img.title }}">Delete</button>
-    </form>
+    <div class="content-actions">
+      <a href="{% url 'portal:gallery_detail' pk=img.pk %}" class="btn btn-outline btn-sm">View</a>
+      {% if request.user.is_superuser %}
+      <a href="{% url 'portal:gallery_edit' pk=img.pk %}" class="btn btn-outline btn-sm">Edit</a>
+      <form method="post" action="{% url 'portal:gallery_publish' pk=img.pk %}">{% csrf_token %}<button type="submit" class="btn btn-outline btn-sm">{% if img.is_published %}Unpublish{% else %}Publish{% endif %}</button></form>
+      <a href="{% url 'portal:gallery_delete' pk=img.pk %}" class="btn btn-danger btn-sm">Delete</a>
+      {% endif %}
+    </div>
   </div>
   {% endfor %}
 </div>
 {% else %}
 <div class="empty-state">
-  <p class="empty-state__text">No images uploaded yet. <a href="{% url 'dashboard:gallery_upload' %}">Upload one</a>.</p>
+  <p class="empty-state__text">No images uploaded yet.
+    {% if request.user.is_superuser %}<a href="{% url 'portal:gallery_upload' %}">Upload one</a>.{% endif %}
+  </p>
 </div>
 {% endif %}
+{% include "dashboard/includes/pagination.html" with page_obj=page_obj %}
 {% endblock %}

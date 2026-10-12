@@ -191,7 +191,11 @@ class UploadFormTests(TestCase):
 
     def test_explicitly_unchecked_gallery_publication_is_kept_as_draft(self):
         form = GalleryImageForm(
-            {"_portal_upload_form": "1", "title": "Private image"},
+            {
+                "_portal_upload_form": "1",
+                "_advanced_settings": "1",
+                "title": "Private image",
+            },
             {"image": make_image_upload("private.png")},
         )
 
@@ -202,10 +206,10 @@ class UploadFormTests(TestCase):
 class PortalUploadViewTests(TestCase):
     def setUp(self):
         user_model = get_user_model()
-        self.staff = user_model.objects.create_user(
+        self.staff = user_model.objects.create_superuser(
             username="upload_staff",
             email="upload@example.com",
-            is_staff=True,
+            password="not-a-real-production-password",
         )
         self.client = Client()
         self.client.force_login(self.staff)
@@ -258,7 +262,7 @@ class PortalUploadViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "/dashboard/videos/")
+        self.assertEqual(response["Location"], "/portal/videos/")
         self.assertTrue(Video.objects.filter(title="Live set").exists())
         self.assertEqual(upload_resource.call_args.kwargs["resource_type"], "video")
 
